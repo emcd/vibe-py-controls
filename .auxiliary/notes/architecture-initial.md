@@ -1,8 +1,8 @@
 # Controls Layer Architecture
 
 **Date:** 2025-11-16
-**Status:** Design phase - incorporating review feedback
-**Version:** 2.0 (consolidated)
+**Status:** Design phase - refinements incorporated
+**Version:** 2.1 (refined)
 
 ## Executive Summary
 
@@ -19,15 +19,15 @@ This consolidated document incorporates:
 
 ### Core Patterns Identified
 
-#### 1. **Definition/Value Split Pattern**
+#### 1. **Definition/Control Split Pattern**
 The existing architecture uses a clear separation:
-- **Definitions**: Templates that know how to validate, create values, and serialize
-- **Values**: Pair a definition with current state
+- **Definitions**: Templates that know how to validate, create controls, and serialize
+- **Controls**: Pair a definition with current state
 
-**Terminology Decision:** Replacing "Instance" with "Value" to avoid confusion with Python class instances.
+**Terminology Decision:** Using "Control" instead of "Instance" or "Value" for simplicity and clarity.
 
 This pattern enables:
-- Reusability (one definition, many values)
+- Reusability (one definition, many controls)
 - Type safety through validation
 - Clean separation of concerns
 
@@ -79,12 +79,12 @@ From the reference implementation:
 ### Project Integration
 
 **External Layers:**
-- **LLM Provider Clients**: Separate project nativizes controls to API parameters
-- **Prompt Templates**: Consume this library's control values
-- **UI Frameworks**: Adapters map controls to framework widgets
+- **LLM Provider Clients**: Separate project nativizes control values to API parameters
+- **Prompt Templates**: Consume values from controls
+- **UI Frameworks**: Adapters map control definitions to framework widgets
 
 **This Library's Scope:**
-- Generic control abstractions
+- Control abstractions (definitions and controls)
 - Validation framework
 - JSON-compatible serialization
 - TOML descriptor parsing
@@ -93,24 +93,25 @@ From the reference implementation:
 
 ## Core Architecture
 
-### Terminology: Value (not Instance)
+### Terminology: Control (not Instance or Value)
 
-**Chosen Term:** `ControlValue` (replaces `ControlInstance`)
+**Chosen Term:** `Control` (replaces `ControlInstance` and `ControlValue`)
 
 **Rationale:**
-- Intuitive - users think "I'm setting the value"
-- Matches UI conventions (e.g., `<input value="...">`)
-- Concise and unambiguous
-- Pairs well with "Definition"
+- Simple and intuitive - "a control" is the thing the user interacts with
+- Avoids redundancy - "control" already implies it has state
+- Clean pairing with "Definition"
+- Natural language: "BooleanDefinition creates a Boolean control"
 
 **Naming Convention:**
-- Base classes: `ControlDefinition`, `ControlValue`
-- Concrete types: `BooleanDefinition`, `BooleanValue`
+- Base classes: `ControlDefinition`, `Control`
+- Concrete types: `BooleanDefinition` creates `Boolean`
+- Methods: `create_control()`, `update_control()`, etc.
 
-**Alternatives Considered:**
-- `ControlState` - Emphasizes state management
-- `ControlBinding` - Data binding concept
-- `ControlModel` - MVC terminology
+**Alternatives Considered (and rejected):**
+- `ControlValue` - Redundant, controls already have values
+- `ControlState` - Emphasizes state but verbose
+- `ControlInstance` - Confusing with Python class instances
 
 ### Architecture Layers
 
@@ -178,8 +179,8 @@ class ControlDefinition(Protocol):
         ...
 
     @abstractmethod
-    def create_value(self, initial: __.typx.Any = None) -> 'ControlValue':
-        """Create a value holder for this control."""
+    def create_control(self, initial: __.typx.Any = None) -> 'Control':
+        """Create a control from this definition."""
         ...
 
     @abstractmethod
@@ -193,8 +194,8 @@ class ControlDefinition(Protocol):
         ...
 
 
-class ControlValue(Protocol):
-    """Protocol for control values.
+class Control(Protocol):
+    """Protocol for controls.
 
     Represents the current state of a control paired with its definition.
     """
@@ -226,10 +227,12 @@ class BooleanDefinition(DataclassProtocol):
     Attributes:
         default: Default boolean value
         validation_message: Custom error message
+        hints: UI hints for rendering
     """
 
     default: bool = False
     validation_message: str = "Value must be a boolean"
+    hints: 'BooleanHints' = field(default_factory=lambda: BooleanHints())
 
     def validate_value(self, value: __.typx.Any) -> bool:
         """Validate boolean value with strict type checking."""
@@ -237,12 +240,12 @@ class BooleanDefinition(DataclassProtocol):
             raise ValidationError(self.validation_message)
         return value
 
-    def create_value(self, initial: __.typx.Any = None) -> 'BooleanValue':
-        """Create boolean value holder."""
+    def create_control(self, initial: __.typx.Any = None) -> 'Boolean':
+        """Create boolean control."""
         validated = self.validate_value(
             initial if initial is not None else self.default
         )
-        return BooleanValue(definition=self, current=validated)
+        return Boolean(definition=self, current=validated)
 
     def serialize_value(self, value: bool) -> bool:
         """Boolean serializes as-is."""
@@ -253,8 +256,8 @@ class BooleanDefinition(DataclassProtocol):
         return self.default
 
 
-class BooleanValue(DataclassProtocol):
-    """Boolean control value holder.
+class Boolean(DataclassProtocol):
+    """Boolean control.
 
     Attributes:
         definition: The boolean definition
@@ -265,9 +268,9 @@ class BooleanValue(DataclassProtocol):
     current: bool
 
     def update(self, new_value: __.typx.Any) -> Self:
-        """Create new value with updated state."""
+        """Create new control with updated state."""
         validated = self.definition.validate_value(new_value)
-        return BooleanValue(definition=self.definition, current=validated)
+        return Boolean(definition=self.definition, current=validated)
 
     def toggle(self) -> Self:
         """Toggle the boolean value."""
@@ -410,7 +413,7 @@ class ArrayDefinition(DataclassProtocol, ABC, Generic[T]):
         max_size: Maximum number of elements (None = no maximum)
         default_elements: Default elements on creation
         allow_duplicates: Whether duplicate values are allowed
-        container_hints: UI hints for layout
+        hints: UI hints for layout
     """
 
     element_definition: ControlDefinition
@@ -418,22 +421,22 @@ class ArrayDefinition(DataclassProtocol, ABC, Generic[T]):
     max_size: int | None = None
     default_elements: Sequence[__.typx.Any] = ()
     allow_duplicates: bool = True
-    container_hints: 'ContainerHints' = field(default_factory=lambda: ContainerHints())
+    hints: 'ArrayHints' = field(default_factory=lambda: ArrayHints())
 
     def validate_value(self, value: Sequence[__.typx.Any]) -> tuple:
         """Validate array value."""
         # Validate sequence type, size constraints, elements, uniqueness
         ...
 
-    def create_value(self, initial: Sequence[__.typx.Any] | None = None) -> 'ArrayValue':
-        """Create array value."""
+    def create_control(self, initial: Sequence[__.typx.Any] | None = None) -> 'Array':
+        """Create array control."""
         ...
 
 
-class ArrayValue(DataclassProtocol, Generic[T]):
-    """Array control value holder.
+class Array(DataclassProtocol, Generic[T]):
+    """Array control.
 
-    All operations return new ArrayValue (immutable).
+    All operations return new Array (immutable).
     """
 
     definition: ArrayDefinition[T]
@@ -460,30 +463,6 @@ class ArrayValue(DataclassProtocol, Generic[T]):
         ...
 ```
 
-### Container UI Hints
-
-```python
-from typing import Literal
-
-@dataclass
-class ContainerHints:
-    """UI hints for container controls.
-
-    Attributes:
-        orientation: Layout direction
-        collapsible: Can be collapsed/expanded
-        initially_collapsed: Start collapsed
-        border: Show border
-        title: Container title/header
-    """
-
-    orientation: Literal["horizontal", "vertical", "grid"] = "vertical"
-    collapsible: bool = False
-    initially_collapsed: bool = False
-    border: bool = False
-    title: str | None = None
-```
-
 ### Deferred Types (Phase 2+)
 
 - Integer (distinct from Interval)
@@ -499,68 +478,88 @@ class ContainerHints:
 
 ## Type Registry
 
-### Hybrid Approach
+### Simple Dictionary Approach (Phase 1)
 
-Global default registry for convenience + custom registries for testing:
+For Phase 1, use a simple dictionary to map type names to definition classes:
 
 ```python
-class ControlRegistry:
-    """Control type registry."""
+# In descriptors.py or similar module
+from .types import (
+    BooleanDefinition,
+    TextDefinition,
+    IntervalDefinition,
+    OptionsDefinition,
+    ArrayDefinition,
+)
 
-    def __init__(self, parent: 'ControlRegistry | None' = None):
-        self._types: dict[str, type[ControlDefinition]] = {}
-        self._parent = parent
-
-    def register(self, name: str, definition_class: type[ControlDefinition]):
-        """Register a control type."""
-        self._types[name] = definition_class
-
-    def get(self, name: str) -> type[ControlDefinition]:
-        """Get control type."""
-        if name in self._types:
-            return self._types[name]
-        if self._parent:
-            return self._parent.get(name)
-        raise ConfigurationError(f"Unknown control type: {name}")
-
-
-# Global default registry
-_DEFAULT_REGISTRY = ControlRegistry()
-
-def register_type(name: str, definition_class: type[ControlDefinition],
-                  registry: ControlRegistry | None = None):
-    """Register type in registry (default if not specified)."""
-    (registry or _DEFAULT_REGISTRY).register(name, definition_class)
-
-def get_type(name: str, registry: ControlRegistry | None = None) -> type[ControlDefinition]:
-    """Get type from registry (default if not specified)."""
-    return (registry or _DEFAULT_REGISTRY).get(name)
+# Simple type name to class mapping
+BUILTIN_TYPES: dict[str, type[ControlDefinition]] = {
+    "boolean": BooleanDefinition,
+    "text": TextDefinition,
+    "interval": IntervalDefinition,
+    "options": OptionsDefinition,
+    "array": ArrayDefinition,
+}
 
 
-# Register built-ins at module import
-register_type("boolean", BooleanDefinition)
-register_type("text", TextDefinition)
-register_type("interval", IntervalDefinition)
-register_type("options", OptionsDefinition)
-register_type("array", ArrayDefinition)
+def descriptor_to_definition(descriptor: dict) -> ControlDefinition:
+    """Create a control definition from a descriptor dictionary.
+
+    Args:
+        descriptor: Dictionary with 'type' key and type-specific parameters
+
+    Returns:
+        Control definition instance
+
+    Raises:
+        ConfigurationError: If type is unknown or descriptor is invalid
+    """
+    type_name = descriptor.get("type")
+    if not type_name:
+        raise ConfigurationError("Descriptor must have 'type' field")
+
+    definition_class = BUILTIN_TYPES.get(type_name)
+    if not definition_class:
+        raise ConfigurationError(
+            f"Unknown control type: {type_name}. "
+            f"Valid types: {', '.join(BUILTIN_TYPES.keys())}"
+        )
+
+    # Remove 'type' from descriptor before passing to constructor
+    params = {k: v for k, v in descriptor.items() if k != "type"}
+
+    return definition_class(**params)
 ```
 
 **Usage:**
 ```python
-# Simple case - use default
-definition = get_type("interval")
-
-# Advanced case - custom registry
-custom = ControlRegistry()
-register_type("email", EmailDefinition, registry=custom)
-definition = get_type("email", registry=custom)
+# From TOML descriptor
+descriptor = {
+    "type": "interval",
+    "minimum": 0.0,
+    "maximum": 1.0,
+    "default": 0.7
+}
+definition = descriptor_to_definition(descriptor)
 ```
 
 **Rationale:**
-- Simple 90% case: just use defaults
-- Advanced 10% case: custom registries available
-- No global state pollution when testing (use custom registry)
-- Matches Python conventions (like `warnings.filterwarnings`)
+- **Simple**: Just a dictionary, no registry pattern needed
+- **Sufficient**: Handles the string → class lookup use case
+- **Clear**: Easy to understand and maintain
+- **Extensible**: Can add custom types later if needed
+
+**Future Consideration (Phase 2+):**
+If we need extensibility for custom types, we can add:
+```python
+def register_custom_type(name: str, definition_class: type[ControlDefinition]):
+    """Register a custom control type."""
+    if name in BUILTIN_TYPES:
+        raise ValueError(f"Cannot override builtin type: {name}")
+    CUSTOM_TYPES[name] = definition_class
+
+# Then check CUSTOM_TYPES in descriptor_to_definition()
+```
 
 ---
 
@@ -614,31 +613,87 @@ label = "Model Selection"
 
 ## UI Metadata & Hints
 
-### Framework-Agnostic Hints (Phase 1)
+### Control-Specific Hint Classes (Phase 1)
+
+Each control type has its own hint class with relevant attributes:
 
 ```python
+from dataclasses import dataclass, field
+from typing import Literal
+
 @dataclass
-class UIHints:
-    """Framework-agnostic UI hints."""
-    widget: str | None = None
+class BooleanHints:
+    """UI hints for boolean controls."""
+    widget_preference: Literal["checkbox", "toggle", "radio"] | None = None
     label: str | None = None
     help_text: str | None = None
+
+
+@dataclass
+class TextHints:
+    """UI hints for text controls."""
+    widget_preference: Literal["input", "textarea"] | None = None
+    multiline: bool = False
     placeholder: str | None = None
-    # ... other agnostic hints
+    label: str | None = None
+    help_text: str | None = None
+
+
+@dataclass
+class IntervalHints:
+    """UI hints for interval controls."""
+    widget_preference: Literal["slider", "spinbox"] | None = None
+    orientation: Literal["horizontal", "vertical"] | None = None
+    show_ticks: bool = False
+    show_value: bool = True
+    label: str | None = None
+    help_text: str | None = None
+
+
+@dataclass
+class OptionsHints:
+    """UI hints for options controls."""
+    widget_preference: Literal["select", "radio", "dropdown"] | None = None
+    label: str | None = None
+    help_text: str | None = None
+
+
+@dataclass
+class ArrayHints:
+    """UI hints for array/container controls."""
+    orientation: Literal["horizontal", "vertical", "grid"] = "vertical"
+    collapsible: bool = False
+    initially_collapsed: bool = False
+    border: bool = False
+    title: str | None = None
+    label: str | None = None
+    help_text: str | None = None
 ```
+
+**Rationale:**
+- Each control type has exactly the hints it needs
+- No forced common structure that doesn't fit all types
+- Type-safe: Can't set invalid hints for a control type
+- Extensible: Easy to add new hints to specific types
 
 ### Per-Framework Hints (Phase 2+)
 
+Optional framework-specific hints can be added later:
+
 ```python
 @dataclass
-class ControlMetadata:
-    """Control metadata."""
-    ui_hints: UIHints
+class BooleanHints:
+    """UI hints for boolean controls."""
+    widget_preference: Literal["checkbox", "toggle", "radio"] | None = None
+    label: str | None = None
+    help_text: str | None = None
+
+    # Optional per-framework hints (Phase 2+)
     framework_hints: dict[str, dict[str, __.typx.Any]] = field(default_factory=dict)
-    # framework_hints example:
+    # Example:
     # {
     #     "panel": {"sizing_mode": "stretch_width"},
-    #     "streamlit": {"help": "Additional help"}
+    #     "streamlit": {"custom_css": "..."}
     # }
 ```
 
@@ -705,16 +760,16 @@ class MessageCatalog(Protocol):
 
 ```python
 def reload_control(name: str, new_descriptor: dict,
-                   current_value: __.typx.Any) -> ControlValue:
+                   current_value: __.typx.Any) -> Control:
     """Reload control definition, preserving value if possible."""
     new_definition = descriptor_to_definition(new_descriptor)
 
     try:
         # Try to use current value
-        return new_definition.create_value(current_value)
+        return new_definition.create_control(current_value)
     except ValidationError:
         # Fall back to default if current value incompatible
-        return new_definition.create_value()
+        return new_definition.create_control()
 ```
 
 **Advanced Approach (If Needed):**
@@ -727,13 +782,13 @@ def reload_control(name: str, new_descriptor: dict,
 - Medium: Migration path finding
 - High: Automatic migration generation
 
-### Value History Tracking - Phase 2+
+### State History Tracking - Phase 2+
 
 **Future Enhancement:**
 
 ```python
-class ControlValue(DataclassProtocol):
-    """Control value with state tracking (future)."""
+class Control(DataclassProtocol):
+    """Control with state tracking (future)."""
 
     definition: ControlDefinition
     current: __.typx.Any           # Current value
@@ -765,16 +820,17 @@ Future enhancement for read-only, disabled, hidden controls based on permissions
 
 | Aspect | Decision | Rationale |
 |--------|----------|-----------|
-| **Terminology** | Value (not Instance) | Intuitive, matches UI conventions |
+| **Terminology** | Control (not Instance/Value) | Simple, intuitive, avoids redundancy |
 | **Base Classes** | Protocol + DataclassProtocol + abstractmethod | Hybrid typing, immutability |
 | **Validation** | Custom lightweight framework | No external dependencies, composable |
 | **Array Design** | Inheritance from DataclassProtocol + ABC | ABC enforcement, generics support |
 | **Error Handling** | Exceptions | Project standard |
-| **Registry** | Global default + custom option | Convenience + testability |
+| **Type Lookup** | Simple dictionary | Sufficient, clear, extensible later |
+| **UI Hints** | Control-specific hint classes | Each type has exactly what it needs |
 | **UI Framework** | Must be agnostic | Core requirement |
 | **LLM Integration** | External layer | Separate provider client project |
 | **Template Expansion** | External consumer | Not this library's responsibility |
-| **Value History** | Defer to Phase 2+ | Presentation layer can't persist |
+| **State History** | Defer to Phase 2+ | Presentation layer can't persist |
 | **Scale** | Handful of controls (< 20) | Correctness over performance |
 | **i18n** | Message keys + optional catalog | Non-intrusive, deferred |
 | **Schema Evolution** | Defer or simple reload | Complex, not MVP |
@@ -789,12 +845,18 @@ Future enhancement for read-only, disabled, hidden controls based on permissions
 
 **Goal:** Core functionality with 5 basic types
 
-1. Base abstractions (ControlDefinition, ControlValue protocols)
+1. Base abstractions (ControlDefinition, Control protocols)
 2. Custom validation framework (Validator, CompositeValidator, etc.)
-3. Five core types: Boolean, Text, Interval, Options, Array
-4. JSON serialization/deserialization
-5. Basic exception hierarchy
-6. Initial test suite
+3. Five core types with hint classes:
+   - Boolean + BooleanHints
+   - Text + TextHints
+   - Interval + IntervalHints
+   - Options + OptionsHints
+   - Array + ArrayHints
+4. Simple type name → class dictionary (BUILTIN_TYPES)
+5. JSON serialization/deserialization
+6. Basic exception hierarchy
+7. Initial test suite
 
 **Deliverables:**
 - Working core library
@@ -930,9 +992,12 @@ The vibe-py-controls architecture:
 1. **Builds upon** the solid foundation from ai-experiments
 2. **Modernizes** with frigid.DataclassProtocol and Protocol typing
 3. **Simplifies** with custom lightweight validation (no Pydantic/attrs)
-4. **Generalizes** to support multiple UI frameworks
-5. **Separates concerns** cleanly (controls vs LLM clients vs templates)
-6. **Defers complexity** to later phases (i18n, evolution, computed controls)
-7. **Prioritizes correctness** over premature optimization
+4. **Clarifies** with clean terminology (Control instead of Instance/Value)
+5. **Customizes** UI hints per control type (no one-size-fits-all)
+6. **Generalizes** to support multiple UI frameworks
+7. **Separates concerns** cleanly (controls vs LLM clients vs templates)
+8. **Defers complexity** to later phases (i18n, evolution, computed controls)
+9. **Prioritizes correctness** over premature optimization
+10. **Keeps it simple** with dictionary-based type lookup (Phase 1)
 
 Ready to proceed with Phase 1 implementation!
