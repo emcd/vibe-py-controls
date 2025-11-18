@@ -50,7 +50,7 @@ class Validator( __.immut.DataclassProtocol, __.typx.Protocol ):
         ...
 
 
-class CompositeValidator( __.immut.DataclassObject ):
+class CompositeValidator( Validator ):
     ''' Chains multiple validators together.
 
         Validators are applied in sequence. Each validator receives the output
@@ -84,7 +84,7 @@ class CompositeValidator( __.immut.DataclassObject ):
         return result
 
 
-class ClassValidator( __.immut.DataclassObject ):
+class ClassValidator( Validator ):
     ''' Validates value type.
 
         Example:
@@ -132,7 +132,7 @@ class ClassValidator( __.immut.DataclassObject ):
         return value
 
 
-class IntervalValidator( __.immut.DataclassObject ):
+class IntervalValidator( Validator ):
     ''' Validates numeric range.
 
         Example:
@@ -178,7 +178,7 @@ class IntervalValidator( __.immut.DataclassObject ):
         return value
 
 
-class SizeValidator( __.immut.DataclassObject ):
+class SizeValidator( Validator ):
     ''' Validates sequence or collection length.
 
         Example:
@@ -241,7 +241,7 @@ class SizeValidator( __.immut.DataclassObject ):
         return value
 
 
-class SelectionValidator( __.immut.DataclassObject ):
+class SelectionValidator( Validator ):
     ''' Validates value is one of allowed choices.
 
         Example:

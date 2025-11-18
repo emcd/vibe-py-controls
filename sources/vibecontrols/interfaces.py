@@ -22,7 +22,7 @@
 
 
 from . import __
-from .exceptions import ControlInvalidity
+from . import exceptions as _exceptions
 
 
 class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
@@ -48,7 +48,9 @@ class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
     ) -> __.typx.Annotated[
         __.typx.Any,
         __.ddoc.Doc( "Validated (and possibly normalized) value." ),
-        __.ddoc.Raises( ControlInvalidity, "If the value is invalid." )
+        __.ddoc.Raises(
+            _exceptions.ControlInvalidity, "If the value is invalid."
+        )
     ]:
         ''' Validates and normalizes a value for this control. '''
         ...
@@ -67,7 +69,7 @@ class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
         'Control',
         __.ddoc.Doc( "New control with the initial value." ),
         __.ddoc.Raises(
-            ControlInvalidity, "If the initial value is invalid."
+            _exceptions.ControlInvalidity, "If the initial value is invalid."
         )
     ]:
         ''' Produces a control from this definition. '''
@@ -118,7 +120,9 @@ class Control( __.immut.DataclassProtocol, __.typx.Protocol ):
     ) -> __.typx.Annotated[
         __.typx.Self,
         __.ddoc.Doc( "New control instance with the updated value." ),
-        __.ddoc.Raises( ControlInvalidity, "If the new value is invalid." )
+        __.ddoc.Raises(
+            _exceptions.ControlInvalidity, "If the new value is invalid."
+        )
     ]:
         ''' Produces copy with a new value (immutable operation). '''
         ...
