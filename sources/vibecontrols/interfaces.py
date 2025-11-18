@@ -53,8 +53,8 @@ class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
         ...
 
     @__.abc.abstractmethod
-    def create_control( self, initial: __.typx.Any = __.absent ) -> 'Control':
-        ''' Create a control from this definition.
+    def produce_control( self, initial: __.typx.Any = __.absent ) -> 'Control':
+        ''' Produce a control from this definition.
 
         Args:
             initial: Initial value for the control. If absent, uses default.
@@ -104,8 +104,8 @@ class Control( __.immut.DataclassProtocol, __.typx.Protocol ):
     current: __.typx.Any
 
     @__.abc.abstractmethod
-    def update( self, new_value: __.typx.Any ) -> __.typx.Self:
-        ''' Update to a new value (immutable operation).
+    def copy( self, new_value: __.typx.Any ) -> __.typx.Self:
+        ''' Produce copy with a new value (immutable operation).
 
         Args:
             new_value: The new value for the control

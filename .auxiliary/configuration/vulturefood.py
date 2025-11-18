@@ -74,7 +74,7 @@ from vibecontrols.controls.boolean import (
 )
 
 # Whitelist protocol method implementations
-_ = BooleanDefinition.create_control
+_ = BooleanDefinition.produce_control
 _ = BooleanDefinition.produce_default
 _ = Boolean.toggle
 _ = Boolean.serialize

@@ -74,11 +74,11 @@ class BooleanDefinition( __.immut.DataclassObject ):
             raise __.ControlInvalidity( self.validation_message )
         return value
 
-    def create_control(
+    def produce_control(
         self,
         initial: __.typx.Any = __.absent
     ) -> 'Boolean':
-        ''' Create boolean control.
+        ''' Produce boolean control.
 
         Args:
             initial: Initial value for the control. If absent, uses default.
@@ -131,8 +131,8 @@ class Boolean( __.immut.DataclassObject ):
     definition: BooleanDefinition
     current: bool
 
-    def update( self, new_value: __.typx.Any ) -> __.typx.Self:
-        ''' Update to a new value (immutable operation).
+    def copy( self, new_value: __.typx.Any ) -> __.typx.Self:
+        ''' Produce copy with a new value (immutable operation).
 
         Args:
             new_value: The new boolean value
@@ -154,7 +154,7 @@ class Boolean( __.immut.DataclassObject ):
         Returns:
             A new Boolean control with the toggled value
         '''
-        return self.update( not self.current )
+        return self.copy( not self.current )
 
     def serialize( self ) -> bool:
         ''' Serialize current value.
