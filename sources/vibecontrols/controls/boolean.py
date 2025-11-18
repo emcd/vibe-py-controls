@@ -21,53 +21,54 @@
 ''' Boolean control type implementation. '''
 
 
-from dataclasses import field
-
 from . import __
 
 
 class BooleanHints( __.immut.DataclassObject ):
-    ''' UI hints for boolean controls.
+    ''' UI hints for boolean controls. '''
 
-    Attributes:
-        widget_preference: Preferred widget type (checkbox, toggle, radio)
-        label: Display label for the control
-        help_text: Help or tooltip text
-    '''
-
-    widget_preference: (
-        __.typx.Literal[ "checkbox", "toggle", "radio" ] | None  # noqa: F821
-    ) = None
-    label: str | None = None
-    help_text: str | None = None
+    widget_preference: __.typx.Annotated[
+        __.typx.Literal[ "checkbox", "toggle", "radio" ] | None,  # noqa: F821
+        __.ddoc.Doc(
+            "Preferred widget type (checkbox, toggle, radio)."
+        )
+    ] = None
+    label: __.typx.Annotated[
+        str | None, __.ddoc.Doc( "Display label for the control." )
+    ] = None
+    help_text: __.typx.Annotated[
+        str | None, __.ddoc.Doc( "Help or tooltip text." )
+    ] = None
 
 
 class BooleanDefinition( __.immut.DataclassObject ):
     ''' Boolean control definition.
 
-    Defines a control that accepts true/false values with strict type checking.
-
-    Attributes:
-        default: Default boolean value
-        validation_message: Custom error message for validation failures
-        hints: UI hints for rendering
+        Defines a control that accepts true/false values with strict type
+        checking.
     '''
 
-    default: bool = False
-    validation_message: str = "Value must be a boolean"
-    hints: BooleanHints = field( default_factory = BooleanHints )
+    default: __.typx.Annotated[
+        bool, __.ddoc.Doc( "Default boolean value." )
+    ] = False
+    validation_message: __.typx.Annotated[
+        str, __.ddoc.Doc( "Custom error message for validation failures." )
+    ] = "Value must be a boolean"
+    hints: __.typx.Annotated[
+        BooleanHints, __.ddoc.Doc( "UI hints for rendering." )
+    ] = __.dcls.field( default_factory = BooleanHints )
 
     def validate_value(
         self,
         value: __.typx.Annotated[
             __.typx.Any, __.ddoc.Doc( "Value to validate." )
         ]
-    ) -> __.typx.Annotated[ bool, __.ddoc.Doc( "Value if it is a boolean." ) ]:
-        ''' Validates boolean value with strict type checking.
-
-        Raises:
-            ControlInvalidity: If value is not a boolean.
-        '''
+    ) -> __.typx.Annotated[
+        bool,
+        __.ddoc.Doc( "Value if it is a boolean." ),
+        __.ddoc.Raises( __.ControlInvalidity, "If value is not a boolean." )
+    ]:
+        ''' Validates boolean value with strict type checking. '''
         if not isinstance( value, bool ):
             raise __.ControlInvalidity( self.validation_message )
         return value
@@ -81,13 +82,13 @@ class BooleanDefinition( __.immut.DataclassObject ):
             )
         ] = __.absent
     ) -> __.typx.Annotated[
-        'Boolean', __.ddoc.Doc( "New Boolean control." )
+        'Boolean',
+        __.ddoc.Doc( "New Boolean control." ),
+        __.ddoc.Raises(
+            __.ControlInvalidity, "If the initial value is invalid."
+        )
     ]:
-        ''' Produces boolean control.
-
-        Raises:
-            ControlInvalidity: If the initial value is invalid.
-        '''
+        ''' Produces boolean control. '''
         if __.is_absent( initial ):
             validated = self.default
         else:
@@ -116,16 +117,16 @@ class BooleanDefinition( __.immut.DataclassObject ):
 class Boolean( __.immut.DataclassObject ):
     ''' Boolean control.
 
-    Represents the current state of a boolean control. Immutable - all
-    operations return new instances.
-
-    Attributes:
-        definition: The boolean definition
-        current: Current boolean value
+        Represents the current state of a boolean control. Immutable - all
+        operations return new instances.
     '''
 
-    definition: BooleanDefinition
-    current: bool
+    definition: __.typx.Annotated[
+        BooleanDefinition, __.ddoc.Doc( "Boolean definition." )
+    ]
+    current: __.typx.Annotated[
+        bool, __.ddoc.Doc( "Current boolean value." )
+    ]
 
     def copy(
         self,
@@ -134,13 +135,12 @@ class Boolean( __.immut.DataclassObject ):
         ]
     ) -> __.typx.Annotated[
         __.typx.Self,
-        __.ddoc.Doc( "New Boolean control with the updated value." )
+        __.ddoc.Doc( "New Boolean control with the updated value." ),
+        __.ddoc.Raises(
+            __.ControlInvalidity, "If the new value is invalid."
+        )
     ]:
-        ''' Produces copy with a new value (immutable operation).
-
-        Raises:
-            ControlInvalidity: If the new value is invalid.
-        '''
+        ''' Produces copy with a new value (immutable operation). '''
         validated = self.definition.validate_value( new_value )
         return Boolean(  # type: ignore[return-value]
             definition = self.definition, current = validated
