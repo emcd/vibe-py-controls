@@ -165,7 +165,8 @@ class RangeValidator:
         self.maximum = maximum
         if message is None:
             message = (
-                f"Value must be between { minimum } and { maximum } (inclusive)"
+                f"Value must be between { minimum } and { maximum } "
+                f"(inclusive)"
             )
         self.message = message
 
@@ -254,6 +255,9 @@ class ChoiceValidator:
         >>> validator( "yellow" )  # raises ConstraintError
     '''
 
+    # Maximum number of choices to display in error message
+    _MAX_CHOICES_IN_MESSAGE = 5
+
     def __init__(
         self,
         choices: __.cabc.Collection[ __.typx.Any ],
@@ -270,7 +274,7 @@ class ChoiceValidator:
         ) else choices
         if message is None:
             # Limit displayed choices to avoid huge error messages
-            if len( self.choices ) <= 5:
+            if len( self.choices ) <= self._MAX_CHOICES_IN_MESSAGE:
                 choices_str = ', '.join( repr( c ) for c in self.choices )
                 message = f"Value must be one of: { choices_str }"
             else:

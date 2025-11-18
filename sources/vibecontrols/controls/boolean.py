@@ -36,9 +36,9 @@ class BooleanHints:
         help_text: Help or tooltip text
     '''
 
-    widget_preference: __.typx.Literal[
-        "checkbox", "toggle", "radio"
-    ] | None = None
+    widget_preference: (
+        __.typx.Literal[ "checkbox", "toggle", "radio" ] | None  # noqa: F821
+    ) = None
     label: str | None = None
     help_text: str | None = None
 
@@ -144,7 +144,9 @@ class Boolean( __.immut.DataclassObject ):
             ValidationError: If the new value is invalid
         '''
         validated = self.definition.validate_value( new_value )
-        return Boolean( definition = self.definition, current = validated )
+        return Boolean(  # type: ignore[return-value]
+            definition = self.definition, current = validated
+        )
 
     def toggle( self ) -> __.typx.Self:
         ''' Toggle the boolean value.
