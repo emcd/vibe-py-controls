@@ -54,17 +54,17 @@ _ = ControlDefinition
 
 # --- Validation (Public API) ---
 from vibecontrols.validation import (
-    ChoiceValidator,
+    ClassValidator,
     CompositeValidator,
-    LengthValidator,
-    RangeValidator,
-    TypeValidator,
+    IntervalValidator,
+    SelectionValidator,
+    SizeValidator,
 )
-_ = ChoiceValidator
+_ = ClassValidator
 _ = CompositeValidator
-_ = LengthValidator
-_ = RangeValidator
-_ = TypeValidator
+_ = IntervalValidator
+_ = SelectionValidator
+_ = SizeValidator
 
 # --- Boolean Control (Public API and Protocol Implementations) ---
 from vibecontrols.controls.boolean import (

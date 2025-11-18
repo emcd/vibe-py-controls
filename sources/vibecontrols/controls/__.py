@@ -36,10 +36,10 @@ from ..exceptions import (
 )
 from ..interfaces import Control, ControlDefinition
 from ..validation import (
-    ChoiceValidator,
+    ClassValidator,
     CompositeValidator,
-    LengthValidator,
-    RangeValidator,
-    TypeValidator,
+    IntervalValidator,
+    SelectionValidator,
+    SizeValidator,
     Validator,
 )

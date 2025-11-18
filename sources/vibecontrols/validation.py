@@ -59,8 +59,8 @@ class CompositeValidator( __.immut.DataclassObject ):
 
     Example:
         >>> validator = CompositeValidator(
-        ...     TypeValidator( float ),
-        ...     RangeValidator( 0.0, 1.0 )
+        ...     ClassValidator( float ),
+        ...     IntervalValidator( 0.0, 1.0 )
         ... )
         >>> validator( 0.5 )  # passes both validations
         0.5
@@ -86,11 +86,11 @@ class CompositeValidator( __.immut.DataclassObject ):
         return result
 
 
-class TypeValidator( __.immut.DataclassObject ):
+class ClassValidator( __.immut.DataclassObject ):
     ''' Validates value type.
 
     Example:
-        >>> validator = TypeValidator( bool )
+        >>> validator = ClassValidator( bool )
         >>> validator( True )  # valid
         True
         >>> validator( "text" )  # raises ControlInvalidity
@@ -138,11 +138,11 @@ class TypeValidator( __.immut.DataclassObject ):
         return value
 
 
-class RangeValidator( __.immut.DataclassObject ):
+class IntervalValidator( __.immut.DataclassObject ):
     ''' Validates numeric range.
 
     Example:
-        >>> validator = RangeValidator( 0.0, 1.0 )
+        >>> validator = IntervalValidator( 0.0, 1.0 )
         >>> validator( 0.5 )  # valid
         0.5
         >>> validator( 2.0 )  # raises ConstraintViolation
@@ -191,11 +191,11 @@ class RangeValidator( __.immut.DataclassObject ):
         return value
 
 
-class LengthValidator( __.immut.DataclassObject ):
+class SizeValidator( __.immut.DataclassObject ):
     ''' Validates sequence or collection length.
 
     Example:
-        >>> validator = LengthValidator( min_length=1, max_length=10 )
+        >>> validator = SizeValidator( min_length=1, max_length=10 )
         >>> validator( [ 1, 2, 3 ] )  # valid
         [1, 2, 3]
         >>> validator( [ ] )  # raises ConstraintViolation (too short)
@@ -256,11 +256,11 @@ class LengthValidator( __.immut.DataclassObject ):
         return value
 
 
-class ChoiceValidator( __.immut.DataclassObject ):
+class SelectionValidator( __.immut.DataclassObject ):
     ''' Validates value is one of allowed choices.
 
     Example:
-        >>> validator = ChoiceValidator( [ "red", "green", "blue" ] )
+        >>> validator = SelectionValidator( [ "red", "green", "blue" ] )
         >>> validator( "red" )  # valid
         'red'
         >>> validator( "yellow" )  # raises ConstraintViolation
