@@ -22,15 +22,15 @@
 
 
 from . import __
-from .exceptions import ConstraintError, ValidationError
+from .exceptions import ConstraintViolation, ControlInvalidity
 
 
 class Validator( __.typx.Protocol ):
     ''' Protocol for value validators.
 
     Validators are callables that take a value, validate it, and return
-    the validated (and possibly transformed) value. They raise ValidationError
-    or its subclasses if validation fails.
+    the validated (and possibly transformed) value. They raise
+    ControlInvalidity or its subclasses if validation fails.
 
     Can be implemented as classes with __call__ or as plain functions.
     '''
@@ -45,7 +45,7 @@ class Validator( __.typx.Protocol ):
             The validated (and possibly transformed) value
 
         Raises:
-            ValidationError: If validation fails
+            ControlInvalidity: If validation fails
         '''
         ...
 
@@ -83,7 +83,7 @@ class CompositeValidator:
             The validated value after all validators
 
         Raises:
-            ValidationError: If any validator fails
+            ControlInvalidity: If any validator fails
         '''
         result = value
         for validator in self._validators:
@@ -98,7 +98,7 @@ class TypeValidator:
         >>> validator = TypeValidator( bool )
         >>> validator( True )  # valid
         True
-        >>> validator( "text" )  # raises ValidationError
+        >>> validator( "text" )  # raises ControlInvalidity
     '''
 
     def __init__(
@@ -131,10 +131,10 @@ class TypeValidator:
             The value if type is correct
 
         Raises:
-            ValidationError: If value is wrong type
+            ControlInvalidity: If value is wrong type
         '''
         if not isinstance( value, self.expected_type ):
-            raise ValidationError( self.message )
+            raise ControlInvalidity( self.message )
         return value
 
 
@@ -145,7 +145,7 @@ class RangeValidator:
         >>> validator = RangeValidator( 0.0, 1.0 )
         >>> validator( 0.5 )  # valid
         0.5
-        >>> validator( 2.0 )  # raises ConstraintError
+        >>> validator( 2.0 )  # raises ConstraintViolation
     '''
 
     def __init__(
@@ -180,10 +180,10 @@ class RangeValidator:
             The value if in range
 
         Raises:
-            ConstraintError: If value is out of range
+            ConstraintViolation: If value is out of range
         '''
         if not self.minimum <= value <= self.maximum:
-            raise ConstraintError( self.message )
+            raise ConstraintViolation( self.message )
         return value
 
 
@@ -194,7 +194,7 @@ class LengthValidator:
         >>> validator = LengthValidator( min_length=1, max_length=10 )
         >>> validator( [ 1, 2, 3 ] )  # valid
         [1, 2, 3]
-        >>> validator( [ ] )  # raises ConstraintError (too short)
+        >>> validator( [ ] )  # raises ConstraintViolation (too short)
     '''
 
     def __init__(
@@ -235,13 +235,13 @@ class LengthValidator:
             The value if length is valid
 
         Raises:
-            ConstraintError: If length is invalid
+            ConstraintViolation: If length is invalid
         '''
         length = len( value )
         if self.min_length is not None and length < self.min_length:
-            raise ConstraintError( self.message )
+            raise ConstraintViolation( self.message )
         if self.max_length is not None and length > self.max_length:
-            raise ConstraintError( self.message )
+            raise ConstraintViolation( self.message )
         return value
 
 
@@ -252,7 +252,7 @@ class ChoiceValidator:
         >>> validator = ChoiceValidator( [ "red", "green", "blue" ] )
         >>> validator( "red" )  # valid
         'red'
-        >>> validator( "yellow" )  # raises ConstraintError
+        >>> validator( "yellow" )  # raises ConstraintViolation
     '''
 
     # Maximum number of choices to display in error message
@@ -294,8 +294,8 @@ class ChoiceValidator:
             The value if it's an allowed choice
 
         Raises:
-            ConstraintError: If value is not in choices
+            ConstraintViolation: If value is not in choices
         '''
         if value not in self.choices:
-            raise ConstraintError( self.message )
+            raise ConstraintViolation( self.message )
         return value

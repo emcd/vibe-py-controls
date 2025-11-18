@@ -48,7 +48,7 @@ class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
             The validated (and possibly normalized) value
 
         Raises:
-            ValidationError: If the value is invalid
+            ControlInvalidity: If the value is invalid
         '''
         ...
 
@@ -63,7 +63,7 @@ class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
             A new control with the initial value
 
         Raises:
-            ValidationError: If the initial value is invalid
+            ControlInvalidity: If the initial value is invalid
         '''
         ...
 
@@ -114,7 +114,7 @@ class Control( __.immut.DataclassProtocol, __.typx.Protocol ):
             A new control instance with the updated value
 
         Raises:
-            ValidationError: If the new value is invalid
+            ControlInvalidity: If the new value is invalid
         '''
         ...
 

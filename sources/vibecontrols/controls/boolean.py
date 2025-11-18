@@ -68,10 +68,10 @@ class BooleanDefinition( __.immut.DataclassObject ):
             The value if it is a boolean
 
         Raises:
-            ValidationError: If value is not a boolean
+            ControlInvalidity: If value is not a boolean
         '''
         if not isinstance( value, bool ):
-            raise __.exceptions.ValidationError( self.validation_message )
+            raise __.exceptions.ControlInvalidity( self.validation_message )
         return value
 
     def create_control(
@@ -87,7 +87,7 @@ class BooleanDefinition( __.immut.DataclassObject ):
             A new Boolean control
 
         Raises:
-            ValidationError: If the initial value is invalid
+            ControlInvalidity: If the initial value is invalid
         '''
         if __.is_absent( initial ):
             validated = self.default
@@ -141,7 +141,7 @@ class Boolean( __.immut.DataclassObject ):
             A new Boolean control with the updated value
 
         Raises:
-            ValidationError: If the new value is invalid
+            ControlInvalidity: If the new value is invalid
         '''
         validated = self.definition.validate_value( new_value )
         return Boolean(  # type: ignore[return-value]

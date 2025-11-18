@@ -213,7 +213,14 @@ strict = false
 
 # https://microsoft.github.io/pyright/#/configuration
 [tool.pyright]
-ignore = [ '.auxiliary', 'documentation', 'tests' ] # Ignore diagnostics.
+ignore = [
+  '.auxiliary',
+  'documentation',
+  'tests',
+  # TODO: Remove these once wildcard import typing is resolved
+  'sources/vibecontrols/controls/__.py',
+  'sources/vibecontrols/controls/boolean.py',
+] # Ignore diagnostics.
 include = [ 'sources', 'tests' ]      # Consider for operations.
 reportConstantRedefinition = true
 reportInvalidTypeVarUse = true

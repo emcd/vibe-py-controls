@@ -36,15 +36,15 @@ class ControlError( Omnierror ):
     ''' Base exception for control-related errors. '''
 
 
-class ValidationError( ControlError ):
-    ''' Value validation failed.
+class ControlInvalidity( ControlError, ValueError ):
+    ''' Control value invalidity.
 
     Raised when a value does not meet the requirements defined by a control
     definition (e.g., wrong type, out of range, invalid format).
     '''
 
 
-class ConstraintError( ValidationError ):
+class ConstraintViolation( ControlInvalidity ):
     ''' Constraint violation.
 
     Raised when a value violates a specific constraint (e.g., minimum/maximum
@@ -52,8 +52,8 @@ class ConstraintError( ValidationError ):
     '''
 
 
-class ConfigurationError( ControlError ):
-    ''' Control configuration invalid.
+class DefinitionInvalidity( ControlError, ValueError ):
+    ''' Control definition invalidity.
 
     Raised when a control definition is improperly configured (e.g., invalid
     parameters, inconsistent settings, missing required fields).
