@@ -38,54 +38,60 @@ class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
     '''
 
     @__.abc.abstractmethod
-    def validate_value( self, value: __.typx.Any ) -> __.typx.Any:
-        ''' Validate and normalize a value for this control.
-
-        Args:
-            value: The value to validate
-
-        Returns:
-            The validated (and possibly normalized) value
-
-        Raises:
-            ControlInvalidity: If the value is invalid
-        '''
-        ...
-
-    @__.abc.abstractmethod
-    def produce_control( self, initial: __.typx.Any = __.absent ) -> 'Control':
-        ''' Produce a control from this definition.
-
-        Args:
-            initial: Initial value for the control. If absent, uses default.
-
-        Returns:
-            A new control with the initial value
+    def validate_value(
+        self,
+        value: __.typx.Annotated[
+            __.typx.Any, __.ddoc.Doc( "Value to validate." )
+        ]
+    ) -> __.typx.Annotated[
+        __.typx.Any,
+        __.ddoc.Doc( "Validated (and possibly normalized) value." )
+    ]:
+        ''' Validates and normalizes a value for this control.
 
         Raises:
-            ControlInvalidity: If the initial value is invalid
+            ControlInvalidity: If the value is invalid.
         '''
         ...
 
     @__.abc.abstractmethod
-    def serialize_value( self, value: __.typx.Any ) -> __.typx.Any:
-        ''' Serialize a value to JSON-compatible format.
+    def produce_control(
+        self,
+        initial: __.typx.Annotated[
+            __.typx.Any,
+            __.ddoc.Doc(
+                "Initial value for the control. "
+                "If absent, uses default."
+            )
+        ] = __.absent
+    ) -> __.typx.Annotated[
+        'Control', __.ddoc.Doc( "New control with the initial value." )
+    ]:
+        ''' Produces a control from this definition.
 
-        Args:
-            value: The value to serialize
-
-        Returns:
-            JSON-compatible representation of the value
+        Raises:
+            ControlInvalidity: If the initial value is invalid.
         '''
         ...
 
     @__.abc.abstractmethod
-    def produce_default( self ) -> __.typx.Any:
-        ''' Produce the default value for this control.
+    def serialize_value(
+        self,
+        value: __.typx.Annotated[
+            __.typx.Any, __.ddoc.Doc( "Value to serialize." )
+        ]
+    ) -> __.typx.Annotated[
+        __.typx.Any,
+        __.ddoc.Doc( "JSON-compatible representation of the value." )
+    ]:
+        ''' Serializes a value to JSON-compatible format. '''
+        ...
 
-        Returns:
-            The default value
-        '''
+    @__.abc.abstractmethod
+    def produce_default(
+        self
+    ) -> __.typx.Annotated[ __.typx.Any, __.ddoc.Doc( "Default value." ) ]:
+        ''' Produces the default value for this control. '''
         ...
 
 
@@ -104,25 +110,28 @@ class Control( __.immut.DataclassProtocol, __.typx.Protocol ):
     current: __.typx.Any
 
     @__.abc.abstractmethod
-    def copy( self, new_value: __.typx.Any ) -> __.typx.Self:
-        ''' Produce copy with a new value (immutable operation).
-
-        Args:
-            new_value: The new value for the control
-
-        Returns:
-            A new control instance with the updated value
+    def copy(
+        self,
+        new_value: __.typx.Annotated[
+            __.typx.Any, __.ddoc.Doc( "New value for the control." )
+        ]
+    ) -> __.typx.Annotated[
+        __.typx.Self,
+        __.ddoc.Doc( "New control instance with the updated value." )
+    ]:
+        ''' Produces copy with a new value (immutable operation).
 
         Raises:
-            ControlInvalidity: If the new value is invalid
+            ControlInvalidity: If the new value is invalid.
         '''
         ...
 
     @__.abc.abstractmethod
-    def serialize( self ) -> __.typx.Any:
-        ''' Serialize current value to JSON-compatible format.
-
-        Returns:
-            JSON-compatible representation of the current value
-        '''
+    def serialize(
+        self
+    ) -> __.typx.Annotated[
+        __.typx.Any,
+        __.ddoc.Doc( "JSON-compatible representation of the current value." )
+    ]:
+        ''' Serializes current value to JSON-compatible format. '''
         ...

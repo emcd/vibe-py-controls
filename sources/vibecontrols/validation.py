@@ -36,17 +36,19 @@ class Validator( __.immut.DataclassProtocol, __.typx.Protocol ):
     '''
 
     @__.abc.abstractmethod
-    def __call__( self, value: __.typx.Any ) -> __.typx.Any:
-        ''' Validate value, returning validated/transformed value.
-
-        Args:
-            value: The value to validate
-
-        Returns:
-            The validated (and possibly transformed) value
+    def __call__(
+        self,
+        value: __.typx.Annotated[
+            __.typx.Any, __.ddoc.Doc( "Value to validate." )
+        ]
+    ) -> __.typx.Annotated[
+        __.typx.Any,
+        __.ddoc.Doc( "Validated (and possibly transformed) value." )
+    ]:
+        ''' Validates value, returning validated/transformed value.
 
         Raises:
-            ControlInvalidity: If validation fails
+            ControlInvalidity: If validation fails.
         '''
         ...
 
@@ -68,17 +70,19 @@ class CompositeValidator( __.immut.DataclassObject ):
 
     validators: tuple[ Validator, ... ]
 
-    def __call__( self, value: __.typx.Any ) -> __.typx.Any:
-        ''' Apply validators in sequence.
-
-        Args:
-            value: The value to validate
-
-        Returns:
-            The validated value after all validators
+    def __call__(
+        self,
+        value: __.typx.Annotated[
+            __.typx.Any, __.ddoc.Doc( "Value to validate." )
+        ]
+    ) -> __.typx.Annotated[
+        __.typx.Any,
+        __.ddoc.Doc( "Validated value after all validators." )
+    ]:
+        ''' Applies validators in sequence.
 
         Raises:
-            ControlInvalidity: If any validator fails
+            ControlInvalidity: If any validator fails.
         '''
         result = value
         for validator in self.validators:
@@ -101,15 +105,18 @@ class ClassValidator( __.immut.DataclassObject ):
 
     def __new__(
         cls,
-        expected_type: type | tuple[ type, ... ],
-        message: str | None = None
+        expected_type: __.typx.Annotated[
+            type | tuple[ type, ... ],
+            __.ddoc.Doc( "Expected type or tuple of types." )
+        ],
+        message: __.typx.Annotated[
+            str | None,
+            __.ddoc.Doc(
+                "Custom error message. If None, generates default."
+            )
+        ] = None
     ):
-        ''' Create type validator instance.
-
-        Args:
-            expected_type: Expected type or tuple of types
-            message: Custom error message. If None, generates default.
-        '''
+        ''' Creates type validator instance. '''
         if message is None:
             if isinstance( expected_type, tuple ):
                 type_names = ', '.join( t.__name__ for t in expected_type )
@@ -121,17 +128,18 @@ class ClassValidator( __.immut.DataclassObject ):
             cls, expected_type = expected_type, message = message
         )
 
-    def __call__( self, value: __.typx.Any ) -> __.typx.Any:
-        ''' Validate value type.
-
-        Args:
-            value: The value to validate
-
-        Returns:
-            The value if type is correct
+    def __call__(
+        self,
+        value: __.typx.Annotated[
+            __.typx.Any, __.ddoc.Doc( "Value to validate." )
+        ]
+    ) -> __.typx.Annotated[
+        __.typx.Any, __.ddoc.Doc( "Value if type is correct." )
+    ]:
+        ''' Validates value type.
 
         Raises:
-            ControlInvalidity: If value is wrong type
+            ControlInvalidity: If value is wrong type.
         '''
         if not isinstance( value, self.expected_type ):
             raise ControlInvalidity( self.message )
@@ -154,17 +162,20 @@ class IntervalValidator( __.immut.DataclassObject ):
 
     def __new__(
         cls,
-        minimum: float,
-        maximum: float,
-        message: str | None = None
+        minimum: __.typx.Annotated[
+            float, __.ddoc.Doc( "Minimum allowed value (inclusive)." )
+        ],
+        maximum: __.typx.Annotated[
+            float, __.ddoc.Doc( "Maximum allowed value (inclusive)." )
+        ],
+        message: __.typx.Annotated[
+            str | None,
+            __.ddoc.Doc(
+                "Custom error message. If None, generates default."
+            )
+        ] = None
     ):
-        ''' Create range validator instance.
-
-        Args:
-            minimum: Minimum allowed value (inclusive)
-            maximum: Maximum allowed value (inclusive)
-            message: Custom error message. If None, generates default.
-        '''
+        ''' Creates range validator instance. '''
         if message is None:
             message = (
                 f"Value must be between { minimum } and { maximum } "
@@ -174,17 +185,18 @@ class IntervalValidator( __.immut.DataclassObject ):
             cls, minimum = minimum, maximum = maximum, message = message
         )
 
-    def __call__( self, value: __.typx.Any ) -> __.typx.Any:
-        ''' Validate value is in range.
-
-        Args:
-            value: The value to validate
-
-        Returns:
-            The value if in range
+    def __call__(
+        self,
+        value: __.typx.Annotated[
+            __.typx.Any, __.ddoc.Doc( "Value to validate." )
+        ]
+    ) -> __.typx.Annotated[
+        __.typx.Any, __.ddoc.Doc( "Value if in range." )
+    ]:
+        ''' Validates value is in range.
 
         Raises:
-            ConstraintViolation: If value is out of range
+            ConstraintViolation: If value is out of range.
         '''
         if not self.minimum <= value <= self.maximum:
             raise ConstraintViolation( self.message )
@@ -207,17 +219,26 @@ class SizeValidator( __.immut.DataclassObject ):
 
     def __new__(
         cls,
-        min_length: int | None = None,
-        max_length: int | None = None,
-        message: str | None = None
+        min_length: __.typx.Annotated[
+            int | None,
+            __.ddoc.Doc(
+                "Minimum allowed length (inclusive). None = no minimum."
+            )
+        ] = None,
+        max_length: __.typx.Annotated[
+            int | None,
+            __.ddoc.Doc(
+                "Maximum allowed length (inclusive). None = no maximum."
+            )
+        ] = None,
+        message: __.typx.Annotated[
+            str | None,
+            __.ddoc.Doc(
+                "Custom error message. If None, generates default."
+            )
+        ] = None
     ):
-        ''' Create length validator instance.
-
-        Args:
-            min_length: Minimum allowed length (inclusive). None = no minimum.
-            max_length: Maximum allowed length (inclusive). None = no maximum.
-            message: Custom error message. If None, generates default.
-        '''
+        ''' Creates length validator instance. '''
         if message is None:
             if min_length is not None and max_length is not None:
                 message = (
@@ -236,17 +257,19 @@ class SizeValidator( __.immut.DataclassObject ):
             message = message
         )
 
-    def __call__( self, value: __.typx.Any ) -> __.typx.Any:
-        ''' Validate value length.
-
-        Args:
-            value: The value to validate (must support len())
-
-        Returns:
-            The value if length is valid
+    def __call__(
+        self,
+        value: __.typx.Annotated[
+            __.typx.Any,
+            __.ddoc.Doc( "Value to validate (must support len())." )
+        ]
+    ) -> __.typx.Annotated[
+        __.typx.Any, __.ddoc.Doc( "Value if length is valid." )
+    ]:
+        ''' Validates value length.
 
         Raises:
-            ConstraintViolation: If length is invalid
+            ConstraintViolation: If length is invalid.
         '''
         length = len( value )
         if self.min_length is not None and length < self.min_length:
@@ -274,15 +297,18 @@ class SelectionValidator( __.immut.DataclassObject ):
 
     def __new__(
         cls,
-        choices: __.cabc.Collection[ __.typx.Any ],
-        message: str | None = None
+        choices: __.typx.Annotated[
+            __.cabc.Collection[ __.typx.Any ],
+            __.ddoc.Doc( "Collection of allowed values." )
+        ],
+        message: __.typx.Annotated[
+            str | None,
+            __.ddoc.Doc(
+                "Custom error message. If None, generates default."
+            )
+        ] = None
     ):
-        ''' Create choice validator instance.
-
-        Args:
-            choices: Collection of allowed values
-            message: Custom error message. If None, generates default.
-        '''
+        ''' Creates choice validator instance. '''
         choices_frozen = frozenset( choices ) if not isinstance(
             choices, frozenset
         ) else choices
@@ -300,17 +326,18 @@ class SelectionValidator( __.immut.DataclassObject ):
             cls, choices = choices_frozen, message = message
         )
 
-    def __call__( self, value: __.typx.Any ) -> __.typx.Any:
-        ''' Validate value is in allowed choices.
-
-        Args:
-            value: The value to validate
-
-        Returns:
-            The value if it's an allowed choice
+    def __call__(
+        self,
+        value: __.typx.Annotated[
+            __.typx.Any, __.ddoc.Doc( "Value to validate." )
+        ]
+    ) -> __.typx.Annotated[
+        __.typx.Any, __.ddoc.Doc( "Value if it's an allowed choice." )
+    ]:
+        ''' Validates value is in allowed choices.
 
         Raises:
-            ConstraintViolation: If value is not in choices
+            ConstraintViolation: If value is not in choices.
         '''
         if value not in self.choices:
             raise ConstraintViolation( self.message )

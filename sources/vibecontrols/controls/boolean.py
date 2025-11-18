@@ -57,17 +57,16 @@ class BooleanDefinition( __.immut.DataclassObject ):
     validation_message: str = "Value must be a boolean"
     hints: BooleanHints = field( default_factory = BooleanHints )
 
-    def validate_value( self, value: __.typx.Any ) -> bool:
-        ''' Validate boolean value with strict type checking.
-
-        Args:
-            value: The value to validate
-
-        Returns:
-            The value if it is a boolean
+    def validate_value(
+        self,
+        value: __.typx.Annotated[
+            __.typx.Any, __.ddoc.Doc( "Value to validate." )
+        ]
+    ) -> __.typx.Annotated[ bool, __.ddoc.Doc( "Value if it is a boolean." ) ]:
+        ''' Validates boolean value with strict type checking.
 
         Raises:
-            ControlInvalidity: If value is not a boolean
+            ControlInvalidity: If value is not a boolean.
         '''
         if not isinstance( value, bool ):
             raise __.ControlInvalidity( self.validation_message )
@@ -75,18 +74,19 @@ class BooleanDefinition( __.immut.DataclassObject ):
 
     def produce_control(
         self,
-        initial: __.typx.Any = __.absent
-    ) -> 'Boolean':
-        ''' Produce boolean control.
-
-        Args:
-            initial: Initial value for the control. If absent, uses default.
-
-        Returns:
-            A new Boolean control
+        initial: __.typx.Annotated[
+            __.typx.Any,
+            __.ddoc.Doc(
+                "Initial value for the control. If absent, uses default."
+            )
+        ] = __.absent
+    ) -> __.typx.Annotated[
+        'Boolean', __.ddoc.Doc( "New Boolean control." )
+    ]:
+        ''' Produces boolean control.
 
         Raises:
-            ControlInvalidity: If the initial value is invalid
+            ControlInvalidity: If the initial value is invalid.
         '''
         if __.is_absent( initial ):
             validated = self.default
@@ -94,25 +94,22 @@ class BooleanDefinition( __.immut.DataclassObject ):
             validated = self.validate_value( initial )
         return Boolean( definition = self, current = validated )
 
-    def serialize_value( self, value: bool ) -> bool:
-        ''' Serialize boolean value.
+    def serialize_value(
+        self,
+        value: __.typx.Annotated[
+            bool, __.ddoc.Doc( "Boolean value to serialize." )
+        ]
+    ) -> __.typx.Annotated[ bool, __.ddoc.Doc( "Value unchanged." ) ]:
+        ''' Serializes boolean value.
 
         Boolean values serialize as-is since they are JSON-compatible.
-
-        Args:
-            value: The boolean value to serialize
-
-        Returns:
-            The value unchanged
         '''
         return value
 
-    def produce_default( self ) -> bool:
-        ''' Produce the default value for this control.
-
-        Returns:
-            The default boolean value
-        '''
+    def produce_default(
+        self
+    ) -> __.typx.Annotated[ bool, __.ddoc.Doc( "Default boolean value." ) ]:
+        ''' Produces the default value for this control. '''
         return self.default
 
 
@@ -130,35 +127,39 @@ class Boolean( __.immut.DataclassObject ):
     definition: BooleanDefinition
     current: bool
 
-    def copy( self, new_value: __.typx.Any ) -> __.typx.Self:
-        ''' Produce copy with a new value (immutable operation).
-
-        Args:
-            new_value: The new boolean value
-
-        Returns:
-            A new Boolean control with the updated value
+    def copy(
+        self,
+        new_value: __.typx.Annotated[
+            __.typx.Any, __.ddoc.Doc( "New boolean value." )
+        ]
+    ) -> __.typx.Annotated[
+        __.typx.Self,
+        __.ddoc.Doc( "New Boolean control with the updated value." )
+    ]:
+        ''' Produces copy with a new value (immutable operation).
 
         Raises:
-            ControlInvalidity: If the new value is invalid
+            ControlInvalidity: If the new value is invalid.
         '''
         validated = self.definition.validate_value( new_value )
         return Boolean(  # type: ignore[return-value]
             definition = self.definition, current = validated
         )
 
-    def toggle( self ) -> __.typx.Self:
-        ''' Toggle the boolean value.
-
-        Returns:
-            A new Boolean control with the toggled value
-        '''
+    def toggle(
+        self
+    ) -> __.typx.Annotated[
+        __.typx.Self,
+        __.ddoc.Doc( "New Boolean control with the toggled value." )
+    ]:
+        ''' Toggles the boolean value. '''
         return self.copy( not self.current )
 
-    def serialize( self ) -> bool:
-        ''' Serialize current value.
-
-        Returns:
-            JSON-compatible representation of the current value
-        '''
+    def serialize(
+        self
+    ) -> __.typx.Annotated[
+        bool,
+        __.ddoc.Doc( "JSON-compatible representation of the current value." )
+    ]:
+        ''' Serializes current value. '''
         return self.definition.serialize_value( self.current )
