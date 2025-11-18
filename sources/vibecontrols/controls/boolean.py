@@ -21,13 +21,12 @@
 ''' Boolean control type implementation. '''
 
 
-from dataclasses import dataclass, field
+from dataclasses import field
 
 from . import __
 
 
-@dataclass( frozen = True )
-class BooleanHints:
+class BooleanHints( __.immut.DataclassObject ):
     ''' UI hints for boolean controls.
 
     Attributes:
