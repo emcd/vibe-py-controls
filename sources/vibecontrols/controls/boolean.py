@@ -71,7 +71,7 @@ class BooleanDefinition( __.immut.DataclassObject ):
             ControlInvalidity: If value is not a boolean
         '''
         if not isinstance( value, bool ):
-            raise __.exceptions.ControlInvalidity( self.validation_message )
+            raise __.ControlInvalidity( self.validation_message )
         return value
 
     def create_control(

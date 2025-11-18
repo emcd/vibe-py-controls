@@ -47,8 +47,8 @@ _ = ConstraintViolation
 _ = ControlInvalidity
 _ = DefinitionInvalidity
 
-# --- Protocols (Base classes used for structural typing) ---
-from vibecontrols.protocols import Control, ControlDefinition
+# --- Interfaces (Base classes used for structural typing) ---
+from vibecontrols.interfaces import Control, ControlDefinition
 _ = Control
 _ = ControlDefinition
 

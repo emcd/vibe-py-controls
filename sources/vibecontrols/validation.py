@@ -25,7 +25,7 @@ from . import __
 from .exceptions import ConstraintViolation, ControlInvalidity
 
 
-class Validator( __.typx.Protocol ):
+class Validator( __.immut.DataclassProtocol, __.typx.Protocol ):
     ''' Protocol for value validators.
 
     Validators are callables that take a value, validate it, and return
@@ -35,6 +35,7 @@ class Validator( __.typx.Protocol ):
     Can be implemented as classes with __call__ or as plain functions.
     '''
 
+    @__.abc.abstractmethod
     def __call__( self, value: __.typx.Any ) -> __.typx.Any:
         ''' Validate value, returning validated/transformed value.
 
@@ -50,7 +51,7 @@ class Validator( __.typx.Protocol ):
         ...
 
 
-class CompositeValidator:
+class CompositeValidator( __.immut.DataclassObject ):
     ''' Chains multiple validators together.
 
     Validators are applied in sequence. Each validator receives the output
@@ -65,13 +66,7 @@ class CompositeValidator:
         0.5
     '''
 
-    def __init__( self, *validators: Validator ):
-        ''' Initialize composite validator.
-
-        Args:
-            *validators: Validators to chain together
-        '''
-        self._validators = validators
+    validators: tuple[ Validator, ... ]
 
     def __call__( self, value: __.typx.Any ) -> __.typx.Any:
         ''' Apply validators in sequence.
@@ -86,12 +81,12 @@ class CompositeValidator:
             ControlInvalidity: If any validator fails
         '''
         result = value
-        for validator in self._validators:
+        for validator in self.validators:
             result = validator( result )
         return result
 
 
-class TypeValidator:
+class TypeValidator( __.immut.DataclassObject ):
     ''' Validates value type.
 
     Example:
@@ -101,25 +96,30 @@ class TypeValidator:
         >>> validator( "text" )  # raises ControlInvalidity
     '''
 
-    def __init__(
-        self,
+    expected_type: type | tuple[ type, ... ]
+    message: str
+
+    def __new__(
+        cls,
         expected_type: type | tuple[ type, ... ],
         message: str | None = None
     ):
-        ''' Initialize type validator.
+        ''' Create type validator instance.
 
         Args:
             expected_type: Expected type or tuple of types
             message: Custom error message. If None, generates default.
         '''
-        self.expected_type = expected_type
         if message is None:
             if isinstance( expected_type, tuple ):
                 type_names = ', '.join( t.__name__ for t in expected_type )
                 message = f"Value must be one of: { type_names }"
             else:
                 message = f"Value must be { expected_type.__name__ }"
-        self.message = message
+        # Use super().__new__ which handles DataclassObject initialization
+        return super().__new__(
+            cls, expected_type = expected_type, message = message
+        )
 
     def __call__( self, value: __.typx.Any ) -> __.typx.Any:
         ''' Validate value type.
@@ -138,7 +138,7 @@ class TypeValidator:
         return value
 
 
-class RangeValidator:
+class RangeValidator( __.immut.DataclassObject ):
     ''' Validates numeric range.
 
     Example:
@@ -148,27 +148,31 @@ class RangeValidator:
         >>> validator( 2.0 )  # raises ConstraintViolation
     '''
 
-    def __init__(
-        self,
+    minimum: float
+    maximum: float
+    message: str
+
+    def __new__(
+        cls,
         minimum: float,
         maximum: float,
         message: str | None = None
     ):
-        ''' Initialize range validator.
+        ''' Create range validator instance.
 
         Args:
             minimum: Minimum allowed value (inclusive)
             maximum: Maximum allowed value (inclusive)
             message: Custom error message. If None, generates default.
         '''
-        self.minimum = minimum
-        self.maximum = maximum
         if message is None:
             message = (
                 f"Value must be between { minimum } and { maximum } "
                 f"(inclusive)"
             )
-        self.message = message
+        return super().__new__(
+            cls, minimum = minimum, maximum = maximum, message = message
+        )
 
     def __call__( self, value: __.typx.Any ) -> __.typx.Any:
         ''' Validate value is in range.
@@ -187,7 +191,7 @@ class RangeValidator:
         return value
 
 
-class LengthValidator:
+class LengthValidator( __.immut.DataclassObject ):
     ''' Validates sequence or collection length.
 
     Example:
@@ -197,21 +201,23 @@ class LengthValidator:
         >>> validator( [ ] )  # raises ConstraintViolation (too short)
     '''
 
-    def __init__(
-        self,
+    min_length: int | None
+    max_length: int | None
+    message: str
+
+    def __new__(
+        cls,
         min_length: int | None = None,
         max_length: int | None = None,
         message: str | None = None
     ):
-        ''' Initialize length validator.
+        ''' Create length validator instance.
 
         Args:
             min_length: Minimum allowed length (inclusive). None = no minimum.
             max_length: Maximum allowed length (inclusive). None = no maximum.
             message: Custom error message. If None, generates default.
         '''
-        self.min_length = min_length
-        self.max_length = max_length
         if message is None:
             if min_length is not None and max_length is not None:
                 message = (
@@ -223,7 +229,12 @@ class LengthValidator:
                 message = f"Length must be at most { max_length }"
             else:
                 message = "Invalid length"
-        self.message = message
+        return super().__new__(
+            cls,
+            min_length = min_length,
+            max_length = max_length,
+            message = message
+        )
 
     def __call__( self, value: __.typx.Any ) -> __.typx.Any:
         ''' Validate value length.
@@ -245,7 +256,7 @@ class LengthValidator:
         return value
 
 
-class ChoiceValidator:
+class ChoiceValidator( __.immut.DataclassObject ):
     ''' Validates value is one of allowed choices.
 
     Example:
@@ -258,31 +269,36 @@ class ChoiceValidator:
     # Maximum number of choices to display in error message
     _MAX_CHOICES_IN_MESSAGE = 5
 
-    def __init__(
-        self,
+    choices: frozenset[ __.typx.Any ]
+    message: str
+
+    def __new__(
+        cls,
         choices: __.cabc.Collection[ __.typx.Any ],
         message: str | None = None
     ):
-        ''' Initialize choice validator.
+        ''' Create choice validator instance.
 
         Args:
             choices: Collection of allowed values
             message: Custom error message. If None, generates default.
         '''
-        self.choices = frozenset( choices ) if not isinstance(
+        choices_frozen = frozenset( choices ) if not isinstance(
             choices, frozenset
         ) else choices
         if message is None:
             # Limit displayed choices to avoid huge error messages
-            if len( self.choices ) <= self._MAX_CHOICES_IN_MESSAGE:
-                choices_str = ', '.join( repr( c ) for c in self.choices )
+            if len( choices_frozen ) <= cls._MAX_CHOICES_IN_MESSAGE:
+                choices_str = ', '.join( repr( c ) for c in choices_frozen )
                 message = f"Value must be one of: { choices_str }"
             else:
                 message = (
-                    f"Value must be one of { len( self.choices ) } "
+                    f"Value must be one of { len( choices_frozen ) } "
                     f"allowed choices"
                 )
-        self.message = message
+        return super().__new__(
+            cls, choices = choices_frozen, message = message
+        )
 
     def __call__( self, value: __.typx.Any ) -> __.typx.Any:
         ''' Validate value is in allowed choices.
