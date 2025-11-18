@@ -18,21 +18,14 @@
 #============================================================================#
 
 
-''' Common imports used throughout the package. '''
-
-# ruff: noqa: F401
+''' Control type implementations. '''
 
 
-import abc
-import collections.abc as   cabc
-import types
+from .boolean import Boolean, BooleanDefinition, BooleanHints
 
-import typing_extensions as typx
-# --- BEGIN: Injected by Copier ---
-import dynadoc as           ddoc
-import frigid as            immut
-# --- END: Injected by Copier ---
 
-# --- BEGIN: Injected by Copier ---
-from absence import Absential, absent, is_absent
-# --- END: Injected by Copier ---
+__all__ = [
+    'Boolean',
+    'BooleanDefinition',
+    'BooleanHints',
+]

@@ -18,21 +18,51 @@
 #============================================================================#
 
 
-''' Common imports used throughout the package. '''
+''' Whitelist for Vulture dead code detection.
 
-# ruff: noqa: F401
+Items listed here are part of the public API or protocol implementations
+that Vulture cannot detect as being used.
+'''
 
 
-import abc
-import collections.abc as   cabc
-import types
+# --- Exceptions (Public API) ---
+from .exceptions import ConfigurationError
+_ = ConfigurationError
 
-import typing_extensions as typx
-# --- BEGIN: Injected by Copier ---
-import dynadoc as           ddoc
-import frigid as            immut
-# --- END: Injected by Copier ---
+# --- Protocols (Base classes used for structural typing) ---
+from .protocols import Control, ControlDefinition
+_ = Control
+_ = ControlDefinition
 
-# --- BEGIN: Injected by Copier ---
-from absence import Absential, absent, is_absent
-# --- END: Injected by Copier ---
+# --- Validation (Public API) ---
+from .validation import (
+    ChoiceValidator,
+    CompositeValidator,
+    LengthValidator,
+    RangeValidator,
+    TypeValidator,
+)
+_ = ChoiceValidator
+_ = CompositeValidator
+_ = LengthValidator
+_ = RangeValidator
+_ = TypeValidator
+
+# --- Boolean Control (Public API and Protocol Implementations) ---
+from .controls.boolean import (  # noqa: F401
+    Boolean,
+    BooleanDefinition,
+    BooleanHints,
+)
+
+# Whitelist protocol method implementations
+_ = BooleanDefinition.create_control
+_ = BooleanDefinition.produce_default
+_ = Boolean.toggle
+_ = Boolean.serialize
+
+# Whitelist dataclass attributes (used by external code)
+_ = BooleanHints.widget_preference
+_ = BooleanHints.label
+_ = BooleanHints.help_text
+_ = BooleanDefinition.hints

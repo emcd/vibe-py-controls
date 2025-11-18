@@ -30,3 +30,31 @@ class Omniexception( __.immut.exceptions.Omniexception ):
 
 class Omnierror( Omniexception, Exception ):
     ''' Base for error exceptions raised by package API. '''
+
+
+class ControlError( Omnierror ):
+    ''' Base exception for control-related errors. '''
+
+
+class ValidationError( ControlError ):
+    ''' Value validation failed.
+
+    Raised when a value does not meet the requirements defined by a control
+    definition (e.g., wrong type, out of range, invalid format).
+    '''
+
+
+class ConstraintError( ValidationError ):
+    ''' Constraint violation.
+
+    Raised when a value violates a specific constraint (e.g., minimum/maximum
+    bounds, size limits, uniqueness requirements).
+    '''
+
+
+class ConfigurationError( ControlError ):
+    ''' Control configuration invalid.
+
+    Raised when a control definition is improperly configured (e.g., invalid
+    parameters, inconsistent settings, missing required fields).
+    '''
