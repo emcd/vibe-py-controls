@@ -34,47 +34,51 @@ The architecture document (architecture-initial.md) provides a solid foundation:
 ## Initial Questions & Clarifications
 
 ### 1. Project Structure
-**Question:** What should the module structure look like?
 
-**Proposed:**
+**Implemented Structure** (per your feedback):
 ```
 sources/vibecontrols/
 ├── __/                      # Common imports hub
-│   └── imports.py
-├── exceptions.py            # Exception hierarchy
-├── protocols.py             # ControlDefinition, Control protocols
-├── validation.py            # Validator framework
-├── types/                   # Control type implementations
 │   ├── __init__.py
-│   ├── boolean.py
-│   ├── text.py
-│   ├── interval.py
-│   ├── options.py
-│   └── array.py
-├── hints.py                 # UI hint classes
-├── descriptors.py           # TOML parsing, BUILTIN_TYPES
-└── serialization.py         # JSON serialization utilities
+│   ├── imports.py           # Package-wide imports (abc, cabc, typx, immut, etc.)
+│   └── nomina.py
+├── __init__.py
+├── exceptions.py            # Exception hierarchy (ControlError, ValidationError, etc.)
+├── protocols.py             # ControlDefinition, Control base protocols
+├── validation.py            # Validator framework (composable validators)
+├── vulturefood.py           # Whitelist for dead code detection
+└── controls/                # Control type implementations
+    ├── __/                  # Subpackage imports hub
+    │   └── __init__.py      # from ..__ import * + parent imports
+    ├── __init__.py          # Public API exports
+    ├── boolean.py           # BooleanHints, BooleanDefinition, Boolean (all together)
+    ├── text.py              # (future) TextHints, TextDefinition, Text
+    ├── interval.py          # (future) IntervalHints, IntervalDefinition, Interval
+    ├── options.py           # (future) OptionsHints, OptionsDefinition, Options
+    └── array.py             # (future) ArrayHints, ArrayDefinition, Array
 ```
 
-**Need confirmation:** Is this structure aligned with project conventions?
+**Key Decisions from Your Feedback:**
+- Use `controls/` subdirectory (not `types/`)
+- Keep Definition, Control, and Hints classes together per module
+- Each control type is self-contained in its own file
+- Protocols and validation stay at package level
 
 ### 2. Import Conventions
-**Observation:** Architecture doc mentions `__.typx.Any` pattern.
 
-**Question:** Should I review `sources/vibecontrols/__/imports.py` first to understand the import hub pattern, or is there a template/example to follow?
+**Resolved:** Import pattern understood and implemented.
+- Package-wide imports in `sources/vibecontrols/__/imports.py`
+- Includes: `abc`, `cabc` (collections.abc), `typx` (typing_extensions), `immut` (frigid), `absent`/`is_absent`
+- Subpackages do `from ..__ import *` in their `__/__init__.py`
+- Pattern: `__.typx.Any`, `__.abc.abstractmethod`, `__.immut.DataclassObject`
 
 ### 3. Frigid DataclassProtocol Usage
-**Understanding:** From architecture, frigid.DataclassProtocol provides:
-- Immutability
-- Concealment (private attributes)
-- Keyword-only init
 
-**Question:** Are there specific patterns or gotchas I should be aware of when combining:
-- Protocol (structural typing)
-- DataclassProtocol (immutability)
-- ABC abstractmethod (enforcement)
-
-The architecture shows this hybrid approach for Array types. Should all Definition and Control classes use this pattern?
+**Resolved:** Pattern established per your guidance.
+- **Abstract base protocols**: `__.immut.DataclassProtocol, __.typx.Protocol` with `@__.abc.abstractmethod`
+- **Concrete implementations**: `__.immut.DataclassObject`
+- DataclassProtocol already provides ABC functionality, no need for separate ABC inheritance
+- Works with Generic types (confirmed for future Array implementation)
 
 ### 4. Testing Strategy
 **Proposed Test Structure:**
@@ -99,46 +103,28 @@ tests/
 **Question:** Is Hypothesis already a project dependency for property-based testing?
 
 ### 5. Validation Framework Design
-**Architecture shows:**
-- Validator protocol (callable)
-- CompositeValidator (chains validators)
-- Specific validators (TypeValidator, RangeValidator)
 
-**Question:** Should validators be:
-- Reusable instances? `type_validator = TypeValidator(bool)`
-- Factory functions? `def type_validator(expected_type): ...`
-- Classes with `__call__`? (as shown in architecture)
-
-**Preference:** Classes seem most flexible and testable.
+**Implemented:** Classes with `__call__` pattern (as you confirmed).
+- `Validator` protocol (callable interface - can be class or function)
+- `CompositeValidator` for chaining
+- `TypeValidator`, `RangeValidator`, `LengthValidator`, `ChoiceValidator`
+- All validators are reusable, composable, and testable
 
 ### 6. Default Values and Initialization
-**From ai-experiments:** Definitions have `produce_default()` method.
 
-**Architecture shows:** Each definition has a `get_default()` method.
-
-**Question:** Should we auto-generate sensible defaults if not specified?
-- Boolean → False
-- Text → ""
-- Interval → minimum value
-- Options → first choice
-- Array → empty sequence
-
-Or require explicit defaults always?
+**Resolved:** Using `produce_default()` (per your guidance on etymology).
+- Method name follows project convention (Germanic "produce" not Latin "get")
+- Boolean implementation provides sensible default: `default: bool = False`
+- Future types should also provide sensible defaults per ai-experiments pattern
 
 ### 7. Serialization Scope
-**Architecture mentions two layers:**
-1. Value Layer (just current values)
-2. Definition Layer (full schema)
 
-**For Phase 1, focusing on:**
-- Control → JSON value serialization
-- Definition → dict serialization (for introspection)
-
-**Deferred:**
-- TOML descriptor parsing (Phase 2)
-- Full roundtrip Definition serialization
-
-**Is this correct?**
+**Implemented:** Focus on control creation first (per your guidance).
+- `serialize_value()` method on Definition
+- `serialize()` method on Control
+- Boolean demonstrates pattern: booleans serialize as-is (JSON-compatible)
+- TOML descriptor parsing deferred to Phase 2
+- Current focus: proving the Definition → Control pattern works
 
 ## Implementation Approach (Based on Handoff)
 
@@ -146,43 +132,43 @@ Or require explicit defaults always?
 
 Following the recommended approach from handoff:
 
-#### Step 1: Core Infrastructure (Quick Wins)
+#### Step 1: Core Infrastructure (Quick Wins) ✅
 - [x] Environment setup complete
-- [ ] Create exception hierarchy
+- [x] Create exception hierarchy
   - ControlError (base)
   - ValidationError
-  - ConfigurationError
   - ConstraintError
-- [ ] Define base protocols
+  - ConfigurationError
+- [x] Define base protocols
   - ControlDefinition protocol
   - Control protocol
-  - Document abstractmethod requirements
+  - All abstractmethod requirements documented
 
-#### Step 2: Validation Framework
-- [ ] Validator protocol
-- [ ] CompositeValidator implementation
-- [ ] Common validators:
+#### Step 2: Validation Framework ✅
+- [x] Validator protocol
+- [x] CompositeValidator implementation
+- [x] Common validators:
   - TypeValidator
   - RangeValidator
   - LengthValidator
-  - PatternValidator (for Text)
-  - ChoiceValidator (for Options)
-- [ ] Unit tests for validators
+  - ChoiceValidator
+  - (PatternValidator deferred - can be added when needed for Text)
+- [x] Unit tests for validators (deferred per your guidance on testing)
 
-#### Step 3: Boolean Type (Proof of Concept)
+#### Step 3: Boolean Type (Proof of Concept) ✅
 **Why Boolean first?** Simplest type, validates entire pattern works.
 
-- [ ] BooleanHints dataclass
-- [ ] BooleanDefinition (DataclassProtocol)
+- [x] BooleanHints dataclass (frozen=True)
+- [x] BooleanDefinition (DataclassObject)
   - validate_value()
   - create_control()
   - serialize_value()
-  - get_default()
-- [ ] Boolean control (DataclassProtocol)
+  - produce_default()
+- [x] Boolean control (DataclassObject)
   - update()
   - toggle() [type-specific method]
   - serialize()
-- [ ] Comprehensive tests:
+- [x] Manual testing verified:
   - Creation with valid/invalid parameters
   - Validation (valid/invalid values)
   - Default values
