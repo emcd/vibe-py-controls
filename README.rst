@@ -33,7 +33,50 @@
    :target: https://github.com/emcd/vibe-py-controls/blob/master/LICENSE.txt
 
 
-.. todo:: Provide project description and key features.
+🔧 **vibe-controls** is an abstract controls layer that provides UI framework-agnostic control definitions for building data-driven interfaces. It offers immutable, strongly-typed controls with composable validation that can bridge multiple UI frameworks (Panel, Streamlit, web forms, etc.) to backend systems like LLM APIs and prompt templates.
+
+**Key Features** ⭐
+
+- **Framework Agnostic**: Core abstractions work with any UI framework - map controls to widgets in Panel, Streamlit, Qt, or custom frameworks
+- **Immutable by Design**: All controls are immutable using ``frigid`` - updates return new instances, preventing accidental state mutations
+- **Composable Validation**: Lightweight, reusable validators that chain together without external dependencies (no Pydantic or attrs)
+- **Type-Safe**: Leverages Protocol and DataclassProtocol for both structural and nominal typing with full static analysis support
+- **JSON Serialization**: Built-in serialization to/from JSON for state persistence and transmission
+- **Rich UI Hints**: Control-specific hint classes provide rendering guidance without coupling to specific frameworks
+
+**Core Control Types** 📦
+
+Currently implements:
+
+- **Boolean**: True/false controls with strict type checking and toggle operations
+- *(Future)*: Text, Interval (numeric ranges), Options (enumerations), Array (recursive containers)
+
+**Examples** 💡
+
+Create a boolean control with UI hints:
+
+.. code-block:: python
+
+    from vibecontrols.controls import BooleanDefinition, BooleanHints
+
+    # Define a control specification
+    definition = BooleanDefinition(
+        default=False,
+        hints=BooleanHints(
+            label="Enable Dark Mode",
+            help_text="Toggle dark theme for the interface"
+        )
+    )
+
+    # Create an instance with initial value
+    control = definition.produce_control(initial=True)
+    print(control.current)  # True
+
+    # Immutable updates
+    toggled = control.toggle()
+    print(toggled.current)  # False
+
+Map controls to your UI framework of choice - the abstract layer handles validation and state while your adapter handles rendering.
 
 
 Installation 📦
@@ -56,7 +99,23 @@ Or, install via ``pip``:
     pip install vibe-controls
 
 
-.. todo:: Provide usage examples and additional content.
+**Use Cases** 🎯
+
+- **LLM Interface Configuration**: Define controls for temperature, top_p, model selection, and other LLM parameters that map to different provider APIs
+- **Prompt Template Parameters**: Create reusable control definitions that integrate with Jinja2 or other template systems
+- **Multi-Framework UIs**: Define controls once, render in Panel for prototyping, Streamlit for dashboards, and web forms for production
+- **Configuration Management**: Serialize control states to JSON for persistence, versioning, and transmission
+
+**Architecture** 🏗️
+
+The project follows a clean Definition/Control split pattern:
+
+- **Definitions**: Immutable specifications that know how to validate, create controls, and serialize
+- **Controls**: Pair a definition with current state - immutable instances that return new copies on updates
+- **Validators**: Composable validation logic that can be reused across control types
+- **UI Hints**: Optional rendering guidance that adapters can use to map controls to framework-specific widgets
+
+For detailed architecture documentation, see the `architecture directory <documentation/architecture/>`_.
 
 
 Contribution 🤝
