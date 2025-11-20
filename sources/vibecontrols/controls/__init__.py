@@ -21,4 +21,8 @@
 ''' Control type implementations. '''
 
 
+from .array import Array, ArrayDefinition, ArrayHints
 from .boolean import Boolean, BooleanDefinition, BooleanHints
+from .interval import Interval, IntervalDefinition, IntervalHints
+from .options import Options, OptionsDefinition, OptionsHints
+from .text import Text, TextDefinition, TextHints

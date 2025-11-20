@@ -51,8 +51,8 @@ def test_010_exception_instantiation( ):
     assert str( exc4 ) == "test message"
     exc5 = exceptions.ConstraintViolation( "test message" )
     assert str( exc5 ) == "test message"
-    exc6 = exceptions.DefinitionInvalidity( "test message" )
-    assert str( exc6 ) == "test message"
+    exc6 = exceptions.DefinitionInvalidity( )
+    assert "Control definition is invalid." == str( exc6 )
 
 
 def test_100_omniexception_creation( ):
@@ -153,18 +153,20 @@ def test_520_constraint_violation_specificity( ):
 
 
 def test_600_definition_invalidity_creation( ):
-    ''' DefinitionInvalidity is created with message. '''
-    exc = exceptions.DefinitionInvalidity( "definition invalid" )
-    assert str( exc ) == "definition invalid"
+    ''' DefinitionInvalidity is created with parameters. '''
+    exc = exceptions.DefinitionInvalidity(
+        parameter = "test_param", issue = "is invalid", detail = "wrong type"
+    )
+    assert str( exc ) == "Parameter 'test_param' is invalid: wrong type."
 
 
 def test_610_definition_invalidity_value_error( ):
     ''' DefinitionInvalidity is a ValueError subclass. '''
-    exc = exceptions.DefinitionInvalidity( "test" )
+    exc = exceptions.DefinitionInvalidity( )
     assert isinstance( exc, ValueError )
 
 
 def test_620_definition_invalidity_catch( ):
     ''' DefinitionInvalidity is catchable as DefinitionInvalidity. '''
     with pytest.raises( exceptions.DefinitionInvalidity ):
-        raise exceptions.DefinitionInvalidity( "invalid definition" )
+        raise exceptions.DefinitionInvalidity( parameter = "test" )

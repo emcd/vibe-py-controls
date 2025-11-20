@@ -34,10 +34,11 @@ class BooleanHints( __.immut.DataclassObject ):
         )
     ] = None
     label: __.typx.Annotated[
-        str | None, __.ddoc.Doc( "Display label for the control." )
+        __.typx.Optional[ str ],
+        __.ddoc.Doc( "Display label for the control." )
     ] = None
     help_text: __.typx.Annotated[
-        str | None, __.ddoc.Doc( "Help or tooltip text." )
+        __.typx.Optional[ str ], __.ddoc.Doc( "Help or tooltip text." )
     ] = None
 
 
