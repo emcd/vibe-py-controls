@@ -51,7 +51,7 @@ class TextHints( __.immut.DataclassObject ):
     ] = None
 
 
-class TextDefinition( __.immut.DataclassObject ):
+class TextDefinition( __.ControlDefinition ):
     ''' Text control definition.
 
         Defines a control that accepts string values with optional length
@@ -183,7 +183,7 @@ class TextDefinition( __.immut.DataclassObject ):
         return self.default
 
 
-class Text( __.immut.DataclassObject ):
+class Text( __.Control ):
     ''' Text control.
 
         Represents the current state of a text control. Immutable - all
@@ -199,7 +199,7 @@ class Text( __.immut.DataclassObject ):
 
     def copy(
         self,
-        new_value: __.typx.Annotated[
+        value: __.typx.Annotated[
             __.typx.Any, __.ddoc.Doc( "New text value." )
         ]
     ) -> __.typx.Annotated[
@@ -210,10 +210,9 @@ class Text( __.immut.DataclassObject ):
         )
     ]:
         ''' Produces copy with a new value (immutable operation). '''
-        validated = self.definition.validate_value( new_value )
-        return Text(  # type: ignore[return-value]
-            definition = self.definition, current = validated
-        )
+        validated = self.definition.validate_value( value )
+        return type( self )(
+            definition = self.definition, current = validated )
 
     def clear( self ) -> __.typx.Annotated[
         __.typx.Self,

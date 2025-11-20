@@ -51,6 +51,7 @@ _ = DefinitionInvalidity
 from vibecontrols.interfaces import Control, ControlDefinition
 _ = Control
 _ = ControlDefinition
+_ = ControlDefinition.optional
 
 # --- Validation (Public API) ---
 from vibecontrols.validation import (

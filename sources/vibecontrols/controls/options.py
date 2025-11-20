@@ -43,7 +43,7 @@ class OptionsHints( __.immut.DataclassObject ):
     ] = None
 
 
-class OptionsDefinition( __.immut.DataclassObject ):
+class OptionsDefinition( __.ControlDefinition ):
     ''' Options control definition.
 
         Defines a control that accepts values from a predefined set of
@@ -185,7 +185,7 @@ class OptionsDefinition( __.immut.DataclassObject ):
         return self.validate_value( self.default )
 
 
-class Options( __.immut.DataclassObject ):
+class Options( __.Control ):
     ''' Options control.
 
         Represents the current state of an options control. Immutable - all
@@ -204,7 +204,7 @@ class Options( __.immut.DataclassObject ):
 
     def copy(
         self,
-        new_value: __.typx.Annotated[
+        value: __.typx.Annotated[
             __.typx.Any,
             __.ddoc.Doc( "New value (single choice or sequence of choices)." )
         ]
@@ -216,8 +216,8 @@ class Options( __.immut.DataclassObject ):
         )
     ]:
         ''' Produces copy with a new value (immutable operation). '''
-        validated = self.definition.validate_value( new_value )
-        return Options(  # type: ignore[return-value]
+        validated = self.definition.validate_value( value )
+        return type( self )(
             definition = self.definition, current = validated
         )
 

@@ -26,7 +26,7 @@ from . import exceptions as _exceptions
 
 
 class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
-    ''' Protocol for control definitions.
+    ''' Base class for control definitions.
 
         A control definition is an immutable specification that describes:
         - How to validate values
@@ -34,10 +34,18 @@ class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
         - How to serialize values
         - What the default value should be
 
-        Uses both structural (Protocol) and nominal (ABC from
-        DataclassProtocol) typing to enable flexible implementation while
-        enforcing required methods.
+        All control definition classes should inherit from this base class
+        to ensure they have the required fields and methods.
     '''
+
+    optional: __.typx.Annotated[
+        bool,
+        __.ddoc.Doc(
+            ''' Whether this control is optional.
+
+                Optional controls can be toggled on/off by users.
+            ''' ),
+    ] = False
 
     @__.abc.abstractmethod
     def validate_value(
@@ -53,7 +61,7 @@ class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
         )
     ]:
         ''' Validates and normalizes a value for this control. '''
-        ...
+        raise NotImplementedError
 
     @__.abc.abstractmethod
     def produce_control(
@@ -73,7 +81,7 @@ class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
         )
     ]:
         ''' Produces a control from this definition. '''
-        ...
+        raise NotImplementedError
 
     @__.abc.abstractmethod
     def serialize_value(
@@ -86,14 +94,14 @@ class ControlDefinition( __.immut.DataclassProtocol, __.typx.Protocol ):
         __.ddoc.Doc( "JSON-compatible representation of the value." )
     ]:
         ''' Serializes a value to JSON-compatible format. '''
-        ...
+        raise NotImplementedError
 
     @__.abc.abstractmethod
     def produce_default(
         self
     ) -> __.typx.Annotated[ __.typx.Any, __.ddoc.Doc( "Default value." ) ]:
         ''' Produces the default value for this control. '''
-        ...
+        raise NotImplementedError
 
 
 class Control( __.immut.DataclassProtocol, __.typx.Protocol ):
@@ -108,13 +116,19 @@ class Control( __.immut.DataclassProtocol, __.typx.Protocol ):
         enforcing required methods.
     '''
 
-    definition: ControlDefinition
-    current: __.typx.Any
+    definition: __.typx.Annotated[
+        ControlDefinition,
+        __.ddoc.Doc( "The control's definition." )
+    ]
+    current: __.typx.Annotated[
+        __.typx.Any,
+        __.ddoc.Doc( "Current value of the control." )
+    ]
 
     @__.abc.abstractmethod
     def copy(
         self,
-        new_value: __.typx.Annotated[
+        value: __.typx.Annotated[
             __.typx.Any, __.ddoc.Doc( "New value for the control." )
         ]
     ) -> __.typx.Annotated[
@@ -125,7 +139,7 @@ class Control( __.immut.DataclassProtocol, __.typx.Protocol ):
         )
     ]:
         ''' Produces copy with a new value (immutable operation). '''
-        ...
+        raise NotImplementedError
 
     @__.abc.abstractmethod
     def serialize(
@@ -135,4 +149,4 @@ class Control( __.immut.DataclassProtocol, __.typx.Protocol ):
         __.ddoc.Doc( "JSON-compatible representation of the current value." )
     ]:
         ''' Serializes current value to JSON-compatible format. '''
-        ...
+        raise NotImplementedError

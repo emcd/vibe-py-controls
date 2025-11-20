@@ -179,7 +179,11 @@ class OptionsHints:
 - Enables TOML serialization roundtrips
 - UI frameworks can still ignore labels if desired
 
-**Decision:** 🔄 **Awaiting user preference**
+**Decision:** ✅ **Option A - Choice labels on OptionsDefinition**
+- User confirmed: "my decision for the options choice labels is Option A"
+- Will create `Choice` dataclass with `value` and optional `label`
+- `OptionsDefinition.choices` will be `Sequence[Choice]`
+- To be implemented after `optional` flag is added
 
 ---
 
@@ -204,7 +208,7 @@ default-from-expression = '{attribute:maximum}'
 
 ### 7. Optional Controls
 
-**Status:** Need to add
+**Status:** ✅ **IMPLEMENTED**
 
 **Original Usage:**
 ```toml
@@ -214,20 +218,22 @@ optional = true  # User can toggle whether to include this control
 species = 'discrete-interval'
 ```
 
-**What's Needed:**
-Add metadata flag to all Definition classes:
+**Implementation:**
+Added `optional` flag to all Definition classes:
 ```python
 class BooleanDefinition(DataclassObject):
-    optional: bool = False  # Metadata, not validated
+    optional: bool = False  # Metadata flag
     # ... existing fields
 ```
 
-**Decision:** ✅ **Implement in next iteration**
-- Simple boolean flag on Definition
+**Decision:** ✅ **Completed**
+- Simple boolean flag added to all 5 Definition classes
 - UI frameworks can hide/show optional controls
 - Doesn't affect validation logic
+- All tests pass (144/144)
+- All linters pass
 
-**Priority:** Medium - needed for model specifications TOML
+**Implemented:** 2025-11-20
 
 ---
 
@@ -364,14 +370,14 @@ class IntervalDefinition:
 
 ### Must Have (Before Phase 2)
 1. ✅ Core control types (Boolean, Text, Interval, Options, Array) - **DONE**
-2. 🔄 Naming convention refactor - **NEXT SESSION**
-3. 🔄 Add `optional` flag to Definitions - **NEXT SESSION**
-4. 🔄 Clarify Sequence vs Array distinction - **NEEDS USER INPUT**
+2. ✅ Naming convention refactor - **DONE (2025-11-20)**
+3. ✅ Add `optional` flag to Definitions - **DONE (2025-11-20)**
+4. ✅ Array/Sequence distinction clarified - **DONE (single type)**
 
 ### Should Have (Phase 2: Deserialization)
 5. Factory pattern implementation
 6. Nested descriptor handling
-7. Options choice labels (depending on decision)
+7. ✅ Options choice labels - **DECIDED: Option A (Choice dataclass)**
 
 ### Nice to Have (Phase 2+)
 8. Per-framework hints dictionary

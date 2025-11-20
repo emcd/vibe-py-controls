@@ -57,7 +57,7 @@ class IntervalHints( __.immut.DataclassObject ):
     ] = None
 
 
-class IntervalDefinition( __.immut.DataclassObject ):
+class IntervalDefinition( __.ControlDefinition ):
     ''' Interval control definition.
 
         Defines a control that accepts numeric values within a specified range
@@ -201,7 +201,7 @@ class IntervalDefinition( __.immut.DataclassObject ):
         return self.default
 
 
-class Interval( __.immut.DataclassObject ):
+class Interval( __.Control ):
     ''' Interval control.
 
         Represents the current state of an interval control. Immutable - all
@@ -217,7 +217,7 @@ class Interval( __.immut.DataclassObject ):
 
     def copy(
         self,
-        new_value: __.typx.Annotated[
+        value: __.typx.Annotated[
             __.typx.Any, __.ddoc.Doc( "New numeric value." )
         ]
     ) -> __.typx.Annotated[
@@ -228,8 +228,8 @@ class Interval( __.immut.DataclassObject ):
         )
     ]:
         ''' Produces copy with a new value (immutable operation). '''
-        validated = self.definition.validate_value( new_value )
-        return Interval(  # type: ignore[return-value]
+        validated = self.definition.validate_value( value )
+        return type( self )(
             definition = self.definition, current = validated
         )
 

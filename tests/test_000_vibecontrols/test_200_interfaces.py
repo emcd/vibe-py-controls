@@ -59,10 +59,12 @@ def test_100_control_definition_protocol_structure( ):
 
 
 def test_110_control_definition_not_instantiable( ):
-    ''' ControlDefinition protocol cannot be instantiated directly. '''
+    ''' ControlDefinition base class cannot be instantiated directly. '''
     try:
         interfaces.ControlDefinition( )
-        raise AssertionError( "Protocol should not be instantiable" )
+        raise AssertionError(
+            "Abstract base class should not be instantiable"
+        )
     except TypeError:
         pass
 
@@ -159,7 +161,7 @@ def test_250_control_copy_signature( ):
     assert hasattr( control, 'copy' )
     assert callable( control.copy )
     sig = inspect.signature( control.copy )
-    assert 'new_value' in sig.parameters
+    assert 'value' in sig.parameters
 
 
 def test_260_control_serialize_signature( ):

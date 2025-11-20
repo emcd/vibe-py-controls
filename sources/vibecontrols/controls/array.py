@@ -54,7 +54,7 @@ class ArrayHints( __.immut.DataclassObject ):
     ] = None
 
 
-class ArrayDefinition( __.immut.DataclassObject ):
+class ArrayDefinition( __.ControlDefinition ):
     ''' Array control definition.
 
         Defines a control that holds a dynamic sequence of elements, where
@@ -239,7 +239,7 @@ class ArrayDefinition( __.immut.DataclassObject ):
         return self.validate_value( self.default_elements )
 
 
-class Array( __.immut.DataclassObject ):
+class Array( __.Control ):
     ''' Array control.
 
         Represents the current state of an array control. Immutable - all
@@ -256,7 +256,7 @@ class Array( __.immut.DataclassObject ):
 
     def copy(
         self,
-        new_value: __.typx.Annotated[
+        value: __.typx.Annotated[
             __.cabc.Sequence[ __.typx.Any ],
             __.ddoc.Doc( "New array elements." )
         ]
@@ -268,8 +268,8 @@ class Array( __.immut.DataclassObject ):
         )
     ]:
         ''' Produces copy with new elements (immutable operation). '''
-        validated = self.definition.validate_value( new_value )
-        return Array(  # type: ignore[return-value]
+        validated = self.definition.validate_value( value )
+        return type( self )(
             definition = self.definition, current = validated
         )
 

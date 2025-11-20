@@ -42,7 +42,7 @@ class BooleanHints( __.immut.DataclassObject ):
     ] = None
 
 
-class BooleanDefinition( __.immut.DataclassObject ):
+class BooleanDefinition( __.ControlDefinition ):
     ''' Boolean control definition.
 
         Defines a control that accepts true/false values with strict type
@@ -115,7 +115,7 @@ class BooleanDefinition( __.immut.DataclassObject ):
         return self.default
 
 
-class Boolean( __.immut.DataclassObject ):
+class Boolean( __.Control ):
     ''' Boolean control.
 
         Represents the current state of a boolean control. Immutable - all
@@ -131,7 +131,7 @@ class Boolean( __.immut.DataclassObject ):
 
     def copy(
         self,
-        new_value: __.typx.Annotated[
+        value: __.typx.Annotated[
             __.typx.Any, __.ddoc.Doc( "New boolean value." )
         ]
     ) -> __.typx.Annotated[
@@ -142,8 +142,8 @@ class Boolean( __.immut.DataclassObject ):
         )
     ]:
         ''' Produces copy with a new value (immutable operation). '''
-        validated = self.definition.validate_value( new_value )
-        return Boolean(  # type: ignore[return-value]
+        validated = self.definition.validate_value( value )
+        return type( self )(
             definition = self.definition, current = validated
         )
 
