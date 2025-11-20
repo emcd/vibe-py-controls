@@ -79,14 +79,11 @@ class OptionsDefinition( __.immut.DataclassObject ):
             raise __.DefinitionInvalidity(
                 parameter = "choices", issue = "cannot be empty"
             )
-        # Normalize choices to tuple
         object.__setattr__( self, 'choices', tuple( self.choices ) )
-        # Validate uniqueness of choices
         if len( self.choices ) != len( set( self.choices ) ):
             raise __.DefinitionInvalidity(
                 parameter = "choices", issue = "must be unique"
             )
-        # Validate default value
         try:
             self.validate_value( self.default )
         except __.ControlInvalidity as exception:
@@ -119,19 +116,15 @@ class OptionsDefinition( __.immut.DataclassObject ):
         if self.allow_multiple:
             if not isinstance( value, __.cabc.Sequence ):
                 raise __.TypeInvalidity( expected = "a sequence" )
-            # Type narrowing: after isinstance check, treat as Sequence[Any]
             sequence_value = __.typx.cast(
-                __.cabc.Sequence[ __.typx.Any ], value
-            )
+                __.cabc.Sequence[ __.typx.Any ], value )
             if not sequence_value:
                 raise __.SizeConstraintViolation(
                     minimum = 1, maximum = __.absent, actual = 0,
-                    label = "Selection count"
-                )
+                    label = "Selection count" )
             for item in sequence_value:
                 if item not in self.choices:
                     raise __.SelectionConstraintViolation( value = item )
-            # Check for duplicates
             if len( sequence_value ) != len( set( sequence_value ) ):
                 raise __.UniquenessConstraintViolation( )
             return tuple( sequence_value )

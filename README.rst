@@ -115,7 +115,7 @@ The project follows a clean Definition/Control split pattern:
 - **Validators**: Composable validation logic that can be reused across control types
 - **UI Hints**: Optional rendering guidance that adapters can use to map controls to framework-specific widgets
 
-For detailed architecture documentation, see the `architecture directory <documentation/architecture/>`_.
+For detailed architecture documentation, see the `architecture directory <architecture/>`_.
 
 
 Contribution 🤝

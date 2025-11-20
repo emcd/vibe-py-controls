@@ -149,10 +149,8 @@ class ArrayDefinition( __.immut.DataclassObject ):
         ''' Validates array value. '''
         if not isinstance( value, __.cabc.Sequence ):
             raise __.TypeInvalidity( expected = "a sequence" )
-        # Type narrowing: after isinstance check, treat as Sequence[Any]
         sequence_value = __.typx.cast(
-            __.cabc.Sequence[ __.typx.Any ], value
-        )
+            __.cabc.Sequence[ __.typx.Any ], value )
         size = len( sequence_value )
         if size < self.min_size:
             raise __.SizeConstraintViolation(
@@ -161,15 +159,13 @@ class ArrayDefinition( __.immut.DataclassObject ):
                     __.absent if self.max_size is None else self.max_size
                 ),
                 actual = size,
-                label = "Array size"
-            )
+                label = "Array size" )
         if self.max_size is not None and size > self.max_size:
             raise __.SizeConstraintViolation(
                 minimum = self.min_size,
                 maximum = self.max_size,
                 actual = size,
-                label = "Array size"
-            )
+                label = "Array size" )
         validated_elements: list[ __.typx.Any ] = [ ]
         for index, element in enumerate( sequence_value ):
             # Try-except in loop is intentional: provides precise error
@@ -179,8 +175,7 @@ class ArrayDefinition( __.immut.DataclassObject ):
                 validated_elements.append( validated )
             except __.ControlInvalidity as exception:  # noqa: PERF203
                 raise __.ElementInvalidity(
-                    index = index, cause = exception
-                ) from exception
+                    index = index, cause = exception ) from exception
         if not self.allow_duplicates:
             unique_elements: set[ __.typx.Any ] = set( )
             for index, element in enumerate( validated_elements ):
@@ -192,8 +187,7 @@ class ArrayDefinition( __.immut.DataclassObject ):
                     unique_elements.add( element )
                 except TypeError as exception:  # noqa: PERF203
                     raise __.UniquenessConstraintViolation(
-                        index = index, hashable = False
-                    ) from exception
+                        index = index, hashable = False ) from exception
         return tuple( validated_elements )
 
     def produce_control(
@@ -201,15 +195,13 @@ class ArrayDefinition( __.immut.DataclassObject ):
         initial: __.typx.Annotated[
             __.typx.Any,
             __.ddoc.Doc(
-                "Initial value for the control. If absent, uses default."
-            )
+                "Initial value for the control. If absent, uses default." )
         ] = __.absent
     ) -> __.typx.Annotated[
         'Array',
         __.ddoc.Doc( "New Array control." ),
         __.ddoc.Raises(
-            __.ControlInvalidity, "If the initial value is invalid."
-        )
+            __.ControlInvalidity, "If the initial value is invalid." )
     ]:
         ''' Produces array control. '''
         if __.is_absent( initial ):
@@ -235,8 +227,7 @@ class ArrayDefinition( __.immut.DataclassObject ):
         '''
         return [
             self.element_definition.serialize_value( element )
-            for element in value
-        ]
+            for element in value ]
 
     def produce_default(
         self
@@ -306,7 +297,7 @@ class Array( __.immut.DataclassObject ):
         self,
         index: __.typx.Annotated[
             int, __.ddoc.Doc( "Index of element to remove." )
-        ]
+        ],
     ) -> __.typx.Annotated[
         __.typx.Self,
         __.ddoc.Doc( "New Array control with element removed." ),
@@ -316,8 +307,7 @@ class Array( __.immut.DataclassObject ):
         ),
         __.ddoc.Raises(
             __.SizeConstraintViolation,
-            "If removal would violate size constraint."
-        )
+            "If removal would violate size constraint." )
     ]:
         ''' Produces copy with element at index removed. '''
         if not 0 <= index < len( self.current ):
