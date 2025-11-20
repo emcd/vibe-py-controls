@@ -66,13 +66,13 @@ class ArrayDefinition( __.immut.DataclassObject ):
         __.ControlDefinition,
         __.ddoc.Doc( "Definition for array elements." )
     ]
-    min_size: __.typx.Annotated[
+    size_min: __.typx.Annotated[
         int,
         __.ddoc.Doc(
             "Minimum number of elements (0 means no minimum)."
         )
     ] = 0
-    max_size: __.typx.Annotated[
+    size_max: __.typx.Annotated[
         __.typx.Optional[ int ],
         __.ddoc.Doc(
             "Maximum number of elements (None means no maximum)."
@@ -92,18 +92,18 @@ class ArrayDefinition( __.immut.DataclassObject ):
 
     def __post_init__( self ) -> None:
         ''' Validates definition parameters. '''
-        if self.min_size < 0:
+        if self.size_min < 0:
             raise __.DefinitionInvalidity(
-                parameter = "min_size", issue = "cannot be negative"
+                parameter = "size_min", issue = "cannot be negative"
             )
-        if self.max_size is not None:
-            if self.max_size < 0:
+        if self.size_max is not None:
+            if self.size_max < 0:
                 raise __.DefinitionInvalidity(
-                    parameter = "max_size", issue = "cannot be negative"
+                    parameter = "size_max", issue = "cannot be negative"
                 )
-            if self.min_size > self.max_size:
+            if self.size_min > self.size_max:
                 raise __.DefinitionInvalidity(
-                    parameter = "min_size",
+                    parameter = "size_min",
                     issue = "cannot exceed",
                     detail = "maximum size"
                 )
@@ -152,18 +152,18 @@ class ArrayDefinition( __.immut.DataclassObject ):
         sequence_value = __.typx.cast(
             __.cabc.Sequence[ __.typx.Any ], value )
         size = len( sequence_value )
-        if size < self.min_size:
+        if size < self.size_min:
             raise __.SizeConstraintViolation(
-                minimum = self.min_size,
+                minimum = self.size_min,
                 maximum = (
-                    __.absent if self.max_size is None else self.max_size
+                    __.absent if self.size_max is None else self.size_max
                 ),
                 actual = size,
                 label = "Array size" )
-        if self.max_size is not None and size > self.max_size:
+        if self.size_max is not None and size > self.size_max:
             raise __.SizeConstraintViolation(
-                minimum = self.min_size,
-                maximum = self.max_size,
+                minimum = self.size_min,
+                maximum = self.size_max,
                 actual = size,
                 label = "Array size" )
         validated_elements: list[ __.typx.Any ] = [ ]

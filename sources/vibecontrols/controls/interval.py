@@ -73,10 +73,10 @@ class IntervalDefinition( __.immut.DataclassObject ):
     default: __.typx.Annotated[
         float, __.ddoc.Doc( "Default numeric value." )
     ]
-    step: __.typx.Annotated[
+    grade: __.typx.Annotated[
         __.typx.Optional[ float ],
         __.ddoc.Doc(
-            "Step increment for discrete intervals. None means continuous."
+            "Grade increment for discrete intervals. None means continuous."
         )
     ] = None
     validation_message: __.typx.Annotated[
@@ -111,14 +111,14 @@ class IntervalDefinition( __.immut.DataclassObject ):
                 issue = "must be within bounds",
                 detail = "minimum and maximum"
             )
-        if self.step is not None:
-            if not isinstance( self.step, ( int, float ) ):
+        if self.grade is not None:
+            if not isinstance( self.grade, ( int, float ) ):
                 raise __.DefinitionInvalidity(
-                    parameter = "step", issue = "must be numeric"
+                    parameter = "grade", issue = "must be numeric"
                 )
-            if self.step <= 0:
+            if self.grade <= 0:
                 raise __.DefinitionInvalidity(
-                    parameter = "step", issue = "must be positive"
+                    parameter = "grade", issue = "must be positive"
                 )
 
     def validate_value(
@@ -151,12 +151,12 @@ class IntervalDefinition( __.immut.DataclassObject ):
                 maximum = self.maximum,
                 actual = float( value )
             )
-        if self.step is not None:
-            steps_from_minimum = ( value - self.minimum ) / self.step
+        if self.grade is not None:
+            steps_from_minimum = ( value - self.minimum ) / self.grade
             deviation = abs( steps_from_minimum - round( steps_from_minimum ) )
             if not deviation < _FLOAT_EPSILON:
                 raise __.StepConstraintViolation(
-                    step = self.step, minimum = self.minimum
+                    step = self.grade, minimum = self.minimum
                 )
         return float( value )
 
@@ -240,17 +240,17 @@ class Interval( __.immut.DataclassObject ):
         __.ddoc.Doc( "New Interval control with incremented value." ),
         __.ddoc.Raises(
             __.IncrementOperationFailure,
-            "If step is not defined."
+            "If grade is not defined."
         ),
         __.ddoc.Raises(
             __.BoundsConstraintViolation,
             "If increment would exceed maximum."
         )
     ]:
-        ''' Produces copy with value incremented by step. '''
-        if self.definition.step is None:
+        ''' Produces copy with value incremented by grade. '''
+        if self.definition.grade is None:
             raise __.IncrementOperationFailure( operation = "increment" )
-        new_value = self.current + self.definition.step
+        new_value = self.current + self.definition.grade
         return self.copy( new_value )
 
     def decrement(
@@ -260,17 +260,17 @@ class Interval( __.immut.DataclassObject ):
         __.ddoc.Doc( "New Interval control with decremented value." ),
         __.ddoc.Raises(
             __.IncrementOperationFailure,
-            "If step is not defined."
+            "If grade is not defined."
         ),
         __.ddoc.Raises(
             __.BoundsConstraintViolation,
             "If decrement would fall below minimum."
         )
     ]:
-        ''' Produces copy with value decremented by step. '''
-        if self.definition.step is None:
+        ''' Produces copy with value decremented by grade. '''
+        if self.definition.grade is None:
             raise __.IncrementOperationFailure( operation = "decrement" )
-        new_value = self.current - self.definition.step
+        new_value = self.current - self.definition.grade
         return self.copy( new_value )
 
     def serialize(

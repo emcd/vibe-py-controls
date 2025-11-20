@@ -61,16 +61,18 @@ class TextDefinition( __.immut.DataclassObject ):
     default: __.typx.Annotated[
         str, __.ddoc.Doc( "Default text value." )
     ] = ''
-    min_length: __.typx.Annotated[
+    count_min: __.typx.Annotated[
         __.typx.Optional[ int ],
         __.ddoc.Doc(
-            "Minimum allowed length (inclusive). None means no minimum."
+            "Minimum allowed character count (inclusive). "
+            "None means no minimum."
         )
     ] = None
-    max_length: __.typx.Annotated[
+    count_max: __.typx.Annotated[
         __.typx.Optional[ int ],
         __.ddoc.Doc(
-            "Maximum allowed length (inclusive). None means no maximum."
+            "Maximum allowed character count (inclusive). "
+            "None means no maximum."
         )
     ] = None
     validation_message: __.typx.Annotated[
@@ -83,23 +85,23 @@ class TextDefinition( __.immut.DataclassObject ):
 
     def __post_init__( self ) -> None:
         ''' Validates definition parameters. '''
-        if self.min_length is not None and self.min_length < 0:
+        if self.count_min is not None and self.count_min < 0:
             raise __.DefinitionInvalidity(
-                parameter = "min_length", issue = "cannot be negative"
+                parameter = "count_min", issue = "cannot be negative"
             )
-        if self.max_length is not None and self.max_length < 0:
+        if self.count_max is not None and self.count_max < 0:
             raise __.DefinitionInvalidity(
-                parameter = "max_length", issue = "cannot be negative"
+                parameter = "count_max", issue = "cannot be negative"
             )
         if (
-            self.min_length is not None
-            and self.max_length is not None
-            and self.min_length > self.max_length
+            self.count_min is not None
+            and self.count_max is not None
+            and self.count_min > self.count_max
         ):
             raise __.DefinitionInvalidity(
-                parameter = "min_length",
+                parameter = "count_min",
                 issue = "cannot exceed",
-                detail = "maximum length"
+                detail = "maximum count"
             )
 
     def validate_value(
@@ -116,27 +118,27 @@ class TextDefinition( __.immut.DataclassObject ):
             "If value violates length constraints."
         )
     ]:
-        ''' Validates text value with type and length checking. '''
+        ''' Validates text value with type and character count checking. '''
         if not isinstance( value, str ):
             raise __.ControlInvalidity( self.validation_message )
-        length = len( value )
-        if self.min_length is not None and length < self.min_length:
+        count = len( value )
+        if self.count_min is not None and count < self.count_min:
             raise __.SizeConstraintViolation(
-                minimum = self.min_length,
+                minimum = self.count_min,
                 maximum = (
-                    __.absent if self.max_length is None else self.max_length
+                    __.absent if self.count_max is None else self.count_max
                 ),
-                actual = length,
-                label = "Text length"
+                actual = count,
+                label = "Text character count"
             )
-        if self.max_length is not None and length > self.max_length:
+        if self.count_max is not None and count > self.count_max:
             raise __.SizeConstraintViolation(
                 minimum = (
-                    __.absent if self.min_length is None else self.min_length
+                    __.absent if self.count_min is None else self.count_min
                 ),
-                maximum = self.max_length,
-                actual = length,
-                label = "Text length"
+                maximum = self.count_max,
+                actual = count,
+                label = "Text character count"
             )
         return value
 
