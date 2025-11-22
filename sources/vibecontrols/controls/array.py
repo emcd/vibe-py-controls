@@ -186,7 +186,7 @@ class ArrayDefinition( __.ControlDefinition ):
                         raise __.UniquenessConstraintViolation( index = index )
                     unique_elements.add( element )
                 except TypeError as exception:  # noqa: PERF203
-                    raise __.UniquenessConstraintViolation(
+                    raise __.UniquenessConstraintViolation(  # pragma: no cover
                         index = index, hashable = False ) from exception
         return tuple( validated_elements )
 
@@ -384,8 +384,8 @@ class Array( __.Control ):
             )
         try:
             new_elements = tuple( self.current[ i ] for i in new_order )
-        except IndexError as exception:
-            raise __.InvalidPermutation(
+        except IndexError as exception:  # pragma: no cover
+            raise __.InvalidPermutation(  # pragma: no cover
                 expected_length = len( self.current )
             ) from exception
         return self.copy( new_elements )

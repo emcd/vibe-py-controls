@@ -114,7 +114,7 @@ class OptionsDefinition( __.ControlDefinition ):
     ]:
         ''' Validates value is from available choices. '''
         if self.allow_multiple:
-            if not isinstance( value, __.cabc.Sequence ):
+            if not isinstance( value, __.cabc.Sequence ):  # pragma: no cover
                 raise __.TypeInvalidity( expected = "a sequence" )
             sequence_value = __.typx.cast(
                 __.cabc.Sequence[ __.typx.Any ], value )
