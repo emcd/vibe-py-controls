@@ -26,122 +26,51 @@ Overview
 
 This test plan addresses systematic testing of control definitions and their
 production of controls in memory, focusing on validation, control creation,
-and value management **without serialization or deserialization**. The plan
-covers the core abstractions (protocols, validators, exceptions) and concrete
-implementations (Boolean control type).
+and value management **without serialization or deserialization**.
 
-**Scope:** In-memory control operations only. Serialization/deserialization
-testing is deferred to a separate test plan.
+**Scope:** In-memory control operations for **all control types**:
 
-Coverage Analysis Summary
+- Boolean, Text, Interval, Options, Array
+- Validation framework
+- Exception hierarchy
+- Protocol definitions
+
+**Out of Scope:** Serialization/deserialization testing (covered in separate
+test plan)
+
+Coverage Summary
 ===============================================================================
 
-Current Coverage State (as of 2025-11-19)
+Current Coverage State
 -------------------------------------------------------------------------------
 
-Based on the coverage report provided in the planning prompt::
+As of implementation::
 
-    Name                                  Stmts   Miss Branch BrPart  Cover   Missing
-    ---------------------------------------------------------------------------------
-    sources/vibecontrols/__/__init__.py       2      0      0      0   100%
-    sources/vibecontrols/__/imports.py        8      4      0      0    50%   28, 33-38
-    sources/vibecontrols/__/nomina.py         5      0      0      0   100%
-    sources/vibecontrols/__init__.py          3      0      0      0   100%
-    sources/vibecontrols/exceptions.py        7      4      0      0    43%   35-55
-    ---------------------------------------------------------------------------------
-    TOTAL                                    25      8      0      0    68%
+    Name                                  Stmts   Miss Branch BrPart  Cover
+    -----------------------------------------------------------------------
+    sources/vibecontrols/exceptions.py      83     42     24      0    44%
+    sources/vibecontrols/interfaces.py      25      6      0      0    76%
+    sources/vibecontrols/validation.py      77      0     32      0   100%
+    sources/vibecontrols/controls/
+        boolean.py                          32      0      4      0   100%
+        text.py                             48     24     14      0    39%
+        interval.py                         70     42     30      0    28%
+        options.py                          68     45     26      0    24%
+        array.py                            95     65     32      0    24%
 
-**Critical Gap:** The following modules have **zero test coverage** as they
-are not yet included in the coverage report:
-
-- ``sources/vibecontrols/interfaces.py`` (139 lines) - Core protocols
-- ``sources/vibecontrols/validation.py`` (298 lines) - Validation framework
-- ``sources/vibecontrols/controls/boolean.py`` (166 lines) - Boolean control type
-- ``sources/vibecontrols/controls/__init__.py`` (25 lines) - Controls exports
-
-**Total Untested Lines:** Approximately 628 lines across 4 modules.
-
-Specific Coverage Gaps by Module
--------------------------------------------------------------------------------
-
-**sources/vibecontrols/exceptions.py** (lines 35-55)
-  Uncovered exception class definitions:
-
-  - Line 35-36: ``ControlError`` class definition
-  - Lines 39-44: ``ControlInvalidity`` class definition
-  - Lines 47-52: ``ConstraintViolation`` class definition
-  - Lines 55-60: ``DefinitionInvalidity`` class definition
-
-  **Note:** These are exception classes. Testing requires instantiation and
-  raising to achieve coverage.
-
-**sources/vibecontrols/__/imports.py** (lines 28, 33-38)
-  Uncovered import statements (likely untouched imports):
-
-  - Line 28: ``import collections.abc as cabc``
-  - Lines 33-38: Conditional imports or unused imports
-
-  **Note:** Import testing is typically handled by ``test_010_base.py`` but
-  may need expansion.
-
-**sources/vibecontrols/interfaces.py** (entire module - 0% coverage)
-  Protocol definitions requiring testing:
-
-  - Lines 28-97: ``ControlDefinition`` protocol with 4 abstract methods
-  - Lines 99-139: ``Control`` protocol with 2 abstract methods
-
-  **Challenge:** Protocols with ``@abstractmethod`` cannot be instantiated
-  directly. Testing requires concrete implementations.
-
-**sources/vibecontrols/validation.py** (entire module - 0% coverage)
-  Five validator classes requiring comprehensive testing:
-
-  - Lines 28-51: ``Validator`` protocol (abstract)
-  - Lines 53-84: ``CompositeValidator`` - chains validators
-  - Lines 87-133: ``ClassValidator`` - type validation
-  - Lines 135-178: ``IntervalValidator`` - numeric range validation
-  - Lines 181-241: ``SizeValidator`` - length validation
-  - Lines 244-297: ``SelectionValidator`` - choice validation
-
-  **Coverage Target:** Each validator needs tests for:
-
-  - Valid inputs (happy path)
-  - Invalid inputs (error paths)
-  - Edge cases (boundary conditions)
-  - Custom message handling
-  - ``__post_init__`` message generation
-
-**sources/vibecontrols/controls/boolean.py** (entire module - 0% coverage)
-  Complete Boolean control implementation:
-
-  - Lines 27-42: ``BooleanHints`` dataclass
-  - Lines 44-115: ``BooleanDefinition`` class with 4 methods
-  - Lines 117-166: ``Boolean`` control class with 3 methods
-
-  **Coverage Target:** Tests must verify:
-
-  - Definition creation with various parameters
-  - Validation (valid/invalid values)
-  - Control production (with/without initial values)
-  - Immutable updates via ``copy()``
-  - Boolean-specific ``toggle()`` method
-  - Serialization (in separate test plan)
+**Complete:** validation.py, controls/boolean.py
+**In Progress:** text.py, interval.py, options.py, array.py
+**Acceptable Gaps:** interfaces.py (abstract method bodies)
 
 Target Coverage Goals
 -------------------------------------------------------------------------------
 
-**Line Coverage:** 100% for all modules in scope
+**Line Coverage:** 100% for all control type modules
 
-**Branch Coverage:** 100% where applicable (especially validators and error
-handling paths)
+**Branch Coverage:** 100% for validation and error handling paths
 
-**Specific Targets:**
-
-- All exception classes: instantiated and raised in tests
-- All validators: tested with valid, invalid, and edge case inputs
-- All protocol methods: exercised through concrete implementations
-- Boolean control: complete lifecycle testing (create → validate → update →
-  toggle)
+**Exclusions:** Abstract method bodies in protocols (``...``) may be marked
+with ``# pragma: no cover`` if needed
 
 Test Strategy
 ===============================================================================
@@ -155,10 +84,9 @@ Testing Approach
 
 **Layered Testing:**
 
-  1. **Unit Tests (test modules 100-499):** Test individual components in
-     isolation
-  2. **Integration Tests (test modules 500+):** Test component interactions
-  3. **Protocol Compliance:** Verify concrete implementations satisfy protocols
+  1. **Foundations (100-300 range):** Exceptions, protocols, validators
+  2. **Control Types (400+ range):** Individual control implementations
+  3. **Integration:** Cross-control interactions and protocol compliance
 
 **No External Dependencies:**
   Tests use only standard library and project dependencies. No network calls,
@@ -167,416 +95,739 @@ Testing Approach
 Test Module Organization
 -------------------------------------------------------------------------------
 
-The project uses a numbered test module scheme where lower numbers indicate
-lower-level functionality. Proposed numbering for new test modules:
+**Foundation Test Modules:**
 
-**Existing Test Modules:**
-
-- ``test_000_package.py`` - Package sanity checks (already exists)
-- ``test_010_base.py`` - Common imports verification (already exists)
-
-**Planned Test Modules:**
-
-- ``test_100_exceptions.py`` - Exception hierarchy testing
-- ``test_200_interfaces.py`` - Protocol definitions and compliance
+- ``test_000_package.py`` - Package sanity checks
+- ``test_010_base.py`` - Common imports verification
+- ``test_100_exceptions.py`` - Exception hierarchy
+- ``test_200_interfaces.py`` - Protocol definitions
 - ``test_300_validation.py`` - Validator framework
-- ``test_400_controls_boolean.py`` - Boolean control type
 
-**Rationale:**
+**Control Type Test Modules:**
+
+- ``test_400_controls_boolean.py`` - Boolean control
+- ``test_410_controls_text.py`` - Text control
+- ``test_420_controls_interval.py`` - Interval control
+- ``test_430_controls_options.py`` - Options control
+- ``test_440_controls_array.py`` - Array control
+
+**Numbering Rationale:**
 
 - **100-level:** Foundational exceptions (lowest dependency)
 - **200-level:** Core abstractions (protocols depend on exceptions)
 - **300-level:** Validation framework (depends on exceptions and protocols)
 - **400-level:** Concrete control types (depends on all above)
 
-Basic Functionality Tests (000-099)
--------------------------------------------------------------------------------
-
-The existing ``test_000_package.py`` and ``test_010_base.py`` provide basic
-sanity checks. No additional tests needed in the 000-099 range for this plan.
-
-Component-Specific Tests (100+)
+General Test Pattern for Control Types
 ===============================================================================
 
-Exception Hierarchy Testing (test_100_exceptions.py)
+Standard Test Structure
 -------------------------------------------------------------------------------
 
-**Module:** ``sources/vibecontrols/exceptions.py``
+Each control type test module must follow this standardized structure to
+ensure comprehensive coverage and consistency across all control types:
 
-**Test Function Numbering:**
+**Test Function Number Ranges:**
 
-- **000-099:** Basic exception functionality
+- **000-099:** Hints dataclass
 
-  - ``test_000_exception_hierarchy`` - Verify inheritance chain
-  - ``test_010_exception_instantiation`` - Create all exception types
+  - Default creation
+  - Individual field setting
+  - All fields together
+  - Immutability verification
 
-- **100-199:** Omniexception base class
+- **100-199:** Definition creation and configuration
 
-  - ``test_100_omniexception_creation`` - Instantiate with message
-  - ``test_110_omniexception_inheritance`` - Verify base class relationship
+  - Default creation (all defaults)
+  - Custom individual parameters
+  - All parameters together
+  - Immutability verification
+  - ``__post_init__`` validation (parameter constraints)
 
-- **200-299:** Omnierror class
+- **200-299:** Definition.validate_value()
 
-  - ``test_200_omnierror_creation`` - Instantiate with message
-  - ``test_210_omnierror_inheritance`` - Verify inheritance from Omniexception
-    and Exception
+  - Valid inputs (type-specific values)
+  - Invalid types (wrong types)
+  - Invalid values (constraint violations)
+  - Custom validation messages
+  - Exception types verification
+  - Edge cases and boundaries
 
-- **300-399:** ControlError class
+- **300-399:** Definition.produce_control()
 
-  - ``test_300_control_error_creation`` - Instantiate with message
-  - ``test_310_control_error_catch`` - Verify catchable as ControlError
-  - ``test_320_control_error_inheritance`` - Verify inheritance chain
+  - Without initial value (uses default)
+  - With valid initial values
+  - With invalid initial values (raises exception)
+  - Explicit absent handling
+  - Returns correct control type
+  - Definition immutability after production
 
-- **400-499:** ControlInvalidity class
+- **400-499:** Definition.serialize_value()
 
-  - ``test_400_control_invalidity_creation`` - Instantiate with message
-  - ``test_410_control_invalidity_value_error`` - Verify ValueError subclass
-  - ``test_420_control_invalidity_catch`` - Catch as ControlInvalidity
-  - ``test_430_control_invalidity_context`` - Verify exception chaining
+  - Type-specific serialization format
+  - Note: Full serialization/deserialization in separate plan
 
-- **500-599:** ConstraintViolation class
+- **500-599:** Definition.produce_default()
 
-  - ``test_500_constraint_violation_creation`` - Instantiate with message
-  - ``test_510_constraint_violation_inheritance`` - Verify ControlInvalidity
-    subclass
-  - ``test_520_constraint_violation_specificity`` - Distinguish from parent
-    ControlInvalidity
+  - Default value production
+  - Custom default values
 
-- **600-699:** DefinitionInvalidity class
+- **600-699:** Control creation and attributes
 
-  - ``test_600_definition_invalidity_creation`` - Instantiate with message
-  - ``test_610_definition_invalidity_value_error`` - Verify ValueError subclass
-  - ``test_620_definition_invalidity_catch`` - Catch as DefinitionInvalidity
+  - Direct creation with definition and current
+  - Definition attribute access
+  - Current attribute access
+  - Immutability verification
 
-**Test Data:**
-  - Various error messages to verify message propagation
-  - Exception chaining to verify ``from`` clause support
+- **700-799:** Control.copy()
 
-**Special Considerations:**
+  - Copy with new valid values
+  - Returns new instance (not same object)
+  - Preserves definition reference
+  - Invalid values raise exceptions
+  - Original unchanged (immutability)
 
-  - Test that all exceptions can be caught generically as ``Omniexception``
-  - Verify proper exception chaining with ``from`` clause
-  - Confirm ValueError inheritance for validation exceptions
+- **800-899:** Control type-specific methods
 
-Protocol Testing (test_200_interfaces.py)
--------------------------------------------------------------------------------
+  - Boolean: ``toggle()``
+  - Text: ``clear()``
+  - Interval: ``increment()``, ``decrement()``
+  - Options: (none currently)
+  - Array: ``append()``, ``remove_at()``, ``insert_at()``, ``reorder()``
 
-**Module:** ``sources/vibecontrols/interfaces.py``
+- **900-999:** Control.serialize()
 
-**Challenge:** Protocols with ``@abstractmethod`` cannot be instantiated
-directly. Testing requires concrete implementations (Boolean control type).
-
-**Test Function Numbering:**
-
-- **000-099:** Basic protocol characteristics
-
-  - ``test_000_protocol_imports`` - Protocols are importable
-  - ``test_010_protocol_abstractmethods`` - Verify abstractmethod decorators
-
-- **100-199:** ControlDefinition protocol
-
-  - ``test_100_control_definition_protocol_structure`` - Verify required
-    methods exist
-  - ``test_110_control_definition_not_instantiable`` - Cannot instantiate
-    protocol directly
-  - ``test_120_control_definition_implementation_compliance`` - Boolean
-    definition satisfies protocol
-  - ``test_130_control_definition_validate_value_signature`` - Signature matches
-  - ``test_140_control_definition_produce_control_signature`` - Signature
-    matches
-  - ``test_150_control_definition_serialize_value_signature`` - Signature
-    matches
-  - ``test_160_control_definition_produce_default_signature`` - Signature
-    matches
-
-- **200-299:** Control protocol
-
-  - ``test_200_control_protocol_structure`` - Verify required attributes and
-    methods
-  - ``test_210_control_not_instantiable`` - Cannot instantiate protocol directly
-  - ``test_220_control_implementation_compliance`` - Boolean control satisfies
-    protocol
-  - ``test_230_control_definition_attribute`` - Has definition attribute
-  - ``test_240_control_current_attribute`` - Has current attribute
-  - ``test_250_control_copy_signature`` - Signature matches
-  - ``test_260_control_serialize_signature`` - Signature matches
-
-- **300-399:** Protocol typing and inheritance
-
-  - ``test_300_protocol_isinstance_check`` - Concrete types pass isinstance
-  - ``test_310_protocol_structural_typing`` - Duck typing compatibility
-  - ``test_320_protocol_nominal_typing`` - ABC registration compatibility
-
-**Testing Approach:**
-
-  - Use Boolean control as the concrete implementation
-  - Verify protocol compliance through ``isinstance()`` checks
-  - Inspect method signatures to confirm protocol conformance
-  - Test that protocols cannot be instantiated directly
-
-**Dependencies:**
-
-  - Requires Boolean control implementation (test_400_controls_boolean.py)
-  - Tests may use Boolean as fixture but focus on protocol compliance
-
-Validation Framework Testing (test_300_validation.py)
--------------------------------------------------------------------------------
-
-**Module:** ``sources/vibecontrols/validation.py``
-
-**Test Function Numbering:**
-
-- **000-099:** Validator protocol basics
-
-  - ``test_000_validator_protocol_importable`` - Protocol exists
-  - ``test_010_validator_callable`` - Validators are callable
-
-- **100-199:** CompositeValidator
-
-  - ``test_100_composite_validator_creation`` - Create with multiple validators
-  - ``test_110_composite_validator_empty`` - Create with no validators
-  - ``test_120_composite_validator_single`` - Create with single validator
-  - ``test_130_composite_validator_chaining`` - Validators execute in sequence
-  - ``test_140_composite_validator_short_circuit`` - Stops on first failure
-  - ``test_150_composite_validator_value_transformation`` - Each validator can
-    transform value
-  - ``test_160_composite_validator_exception_propagation`` - Exception from any
-    validator propagates
-
-- **200-299:** ClassValidator
-
-  - ``test_200_class_validator_creation`` - Create with type
-  - ``test_210_class_validator_valid_type`` - Accepts correct type
-  - ``test_220_class_validator_invalid_type`` - Rejects wrong type
-  - ``test_230_class_validator_multiple_types`` - Tuple of types support
-  - ``test_240_class_validator_default_message`` - Auto-generated message for
-    single type
-  - ``test_250_class_validator_default_message_multiple`` - Auto-generated
-    message for multiple types
-  - ``test_260_class_validator_custom_message`` - Custom message used
-  - ``test_270_class_validator_subclass`` - Subclass passes isinstance
-  - ``test_280_class_validator_exact_type_bool`` - Strict bool (not int)
-
-- **300-399:** IntervalValidator
-
-  - ``test_300_interval_validator_creation`` - Create with min/max
-  - ``test_310_interval_validator_in_range`` - Value within range passes
-  - ``test_320_interval_validator_below_minimum`` - Value too low fails
-  - ``test_330_interval_validator_above_maximum`` - Value too high fails
-  - ``test_340_interval_validator_at_minimum`` - Boundary: minimum value passes
-  - ``test_350_interval_validator_at_maximum`` - Boundary: maximum value passes
-  - ``test_360_interval_validator_default_message`` - Auto-generated message
-  - ``test_370_interval_validator_custom_message`` - Custom message used
-  - ``test_380_interval_validator_float_precision`` - Handles floating point
-    correctly
-
-- **400-499:** SizeValidator
-
-  - ``test_400_size_validator_creation`` - Create with min/max length
-  - ``test_410_size_validator_min_only`` - Only minimum constraint
-  - ``test_420_size_validator_max_only`` - Only maximum constraint
-  - ``test_430_size_validator_both_constraints`` - Both min and max
-  - ``test_440_size_validator_no_constraints`` - Neither (always passes?)
-  - ``test_450_size_validator_valid_length`` - Length in range passes
-  - ``test_460_size_validator_too_short`` - Below minimum fails
-  - ``test_470_size_validator_too_long`` - Above maximum fails
-  - ``test_480_size_validator_at_minimum`` - Boundary: minimum length passes
-  - ``test_490_size_validator_at_maximum`` - Boundary: maximum length passes
-  - ``test_495_size_validator_default_messages`` - Auto-generated messages for
-    all cases
-  - ``test_496_size_validator_custom_message`` - Custom message used
-  - ``test_497_size_validator_various_types`` - Works with list, tuple, str,
-    dict, etc.
-
-- **500-599:** SelectionValidator
-
-  - ``test_500_selection_validator_creation`` - Create with choices
-  - ``test_510_selection_validator_valid_choice`` - Choice in set passes
-  - ``test_520_selection_validator_invalid_choice`` - Choice not in set fails
-  - ``test_530_selection_validator_frozenset_normalization`` - Choices converted
-    to frozenset
-  - ``test_540_selection_validator_few_choices_message`` - Shows all choices (≤5)
-  - ``test_550_selection_validator_many_choices_message`` - Shows count only (>5)
-  - ``test_560_selection_validator_custom_message`` - Custom message used
-  - ``test_570_selection_validator_empty_choices`` - Edge: empty choice set
-  - ``test_580_selection_validator_single_choice`` - Edge: single valid choice
-  - ``test_590_selection_validator_hashable_choices`` - Choices must be hashable
-
-**Test Data Strategies:**
-
-  - **ClassValidator:** Test with bool, int, float, str, list, dict, custom
-    classes
-  - **IntervalValidator:** Test with integers, floats, edge boundaries (0.0,
-    1.0, etc.)
-  - **SizeValidator:** Test with various container types (list, tuple, str,
-    dict)
-  - **SelectionValidator:** Test with strings, numbers, and other hashable types
-  - **CompositeValidator:** Chain different validator types to verify composition
-
-**Special Considerations:**
-
-  - Validators should be immutable (frozen dataclasses)
-  - ``__post_init__`` message generation must be tested
-  - Exception types must be correct (ControlInvalidity, ConstraintViolation)
-  - Validators are reusable - same instance can validate multiple values
-
-Boolean Control Testing (test_400_controls_boolean.py)
--------------------------------------------------------------------------------
-
-**Module:** ``sources/vibecontrols/controls/boolean.py``
-
-**Test Function Numbering:**
-
-- **000-099:** BooleanHints dataclass
-
-  - ``test_000_boolean_hints_default_creation`` - Create with defaults
-  - ``test_010_boolean_hints_with_widget`` - Set widget_preference
-  - ``test_020_boolean_hints_with_label`` - Set label
-  - ``test_030_boolean_hints_with_help`` - Set help_text
-  - ``test_040_boolean_hints_all_fields`` - Set all fields
-  - ``test_050_boolean_hints_immutability`` - Cannot modify after creation
-
-- **100-199:** BooleanDefinition creation and configuration
-
-  - ``test_100_boolean_definition_default_creation`` - Create with all defaults
-  - ``test_110_boolean_definition_custom_default`` - Set default=True
-  - ``test_120_boolean_definition_custom_message`` - Set validation_message
-  - ``test_130_boolean_definition_custom_hints`` - Set custom hints
-  - ``test_140_boolean_definition_all_parameters`` - Set all parameters
-  - ``test_150_boolean_definition_immutability`` - Cannot modify after creation
-
-- **200-299:** BooleanDefinition.validate_value()
-
-  - ``test_200_validate_value_true`` - Validate True
-  - ``test_210_validate_value_false`` - Validate False
-  - ``test_220_validate_value_invalid_integer`` - Reject integer (even 0/1)
-  - ``test_230_validate_value_invalid_string`` - Reject string "true"/"false"
-  - ``test_240_validate_value_invalid_none`` - Reject None
-  - ``test_250_validate_value_custom_message`` - Custom message in exception
-  - ``test_260_validate_value_exception_type`` - Raises ControlInvalidity
-
-- **300-399:** BooleanDefinition.produce_control()
-
-  - ``test_300_produce_control_no_initial`` - Use default value
-  - ``test_310_produce_control_initial_true`` - Set initial to True
-  - ``test_320_produce_control_initial_false`` - Set initial to False
-  - ``test_330_produce_control_invalid_initial`` - Invalid value raises exception
-  - ``test_340_produce_control_absent`` - Explicit absent uses default
-  - ``test_350_produce_control_returns_boolean`` - Returns Boolean control type
-  - ``test_360_produce_control_immutability`` - Definition unchanged after
-    producing control
-
-- **400-499:** BooleanDefinition.serialize_value()
-
-  - ``test_400_serialize_value_true`` - True serializes as True
-  - ``test_410_serialize_value_false`` - False serializes as False
-
-- **500-599:** BooleanDefinition.produce_default()
-
-  - ``test_500_produce_default_false`` - Default is False
-  - ``test_510_produce_default_custom`` - Custom default respected
-
-- **600-699:** Boolean control creation and attributes
-
-  - ``test_600_boolean_control_creation`` - Create with definition and current
-  - ``test_610_boolean_control_definition_attribute`` - Has definition attribute
-  - ``test_620_boolean_control_current_attribute`` - Has current attribute
-  - ``test_630_boolean_control_immutability`` - Cannot modify attributes
-
-- **700-799:** Boolean.copy()
-
-  - ``test_700_copy_to_true`` - Copy with new value True
-  - ``test_710_copy_to_false`` - Copy with new value False
-  - ``test_720_copy_returns_new_instance`` - Returns different instance
-  - ``test_730_copy_preserves_definition`` - Definition unchanged
-  - ``test_740_copy_invalid_value`` - Invalid value raises ControlInvalidity
-  - ``test_750_copy_original_unchanged`` - Original control unchanged (immutability)
-
-- **800-899:** Boolean.toggle()
-
-  - ``test_800_toggle_true_to_false`` - True → False
-  - ``test_810_toggle_false_to_true`` - False → True
-  - ``test_820_toggle_returns_new_instance`` - Returns different instance
-  - ``test_830_toggle_preserves_definition`` - Definition unchanged
-  - ``test_840_toggle_original_unchanged`` - Original control unchanged
-  - ``test_850_toggle_multiple_times`` - Chain multiple toggles
-
-- **900-999:** Boolean.serialize()
-
-  - ``test_900_serialize_true`` - Serialize True
-  - ``test_910_serialize_false`` - Serialize False
-  - ``test_920_serialize_delegates_to_definition`` - Uses
-    definition.serialize_value()
+  - Serializes current value
+  - Delegates to definition.serialize_value()
 
 - **1000-1099:** Integration scenarios
 
-  - ``test_1000_complete_lifecycle`` - Create → validate → update → serialize
-  - ``test_1010_multiple_controls_same_definition`` - Share definition across
-    controls
-  - ``test_1020_controls_independent`` - Modifying one doesn't affect another
-  - ``test_1030_protocol_compliance`` - Implements Control and ControlDefinition
-    protocols
-
-**Test Data:**
-
-  - Valid boolean values: True, False
-  - Invalid values: 0, 1, "true", "false", None, [], {}, etc.
-  - Various custom messages and hints
-
-**Special Considerations:**
-
-  - Test strict boolean type checking (not truthy/falsy)
-  - Verify immutability at every operation
-  - Test protocol compliance (isinstance checks)
-  - Ensure definition can be shared across multiple controls safely
-
-Implementation Notes
-===============================================================================
+  - Complete lifecycle (create → validate → update → serialize)
+  - Multiple controls sharing same definition
+  - Controls are independent (modifying one doesn't affect another)
+  - Protocol compliance verification
 
 Testing Patterns
 -------------------------------------------------------------------------------
 
 **Immutability Verification:**
 
-  All tests that create or update objects must verify immutability by:
+  All tests that create or update objects must verify immutability:
 
-  1. Creating original object
-  2. Performing operation (should return new instance)
-  3. Asserting original is unchanged
-  4. Asserting new instance has expected value
+  1. Create original object
+  2. Perform operation (should return new instance)
+  3. Assert original is unchanged
+  4. Assert new instance has expected value
+  5. Assert ``id(original) != id(new_instance)``
 
 **Exception Testing:**
 
   Use ``pytest.raises`` with message inspection::
 
-    with pytest.raises( ControlInvalidity ) as exc_info:
-        validator( invalid_value )
-    assert "expected message" in str( exc_info.value )
+    with pytest.raises(ControlInvalidity, match="expected text") as exc_info:
+        validator(invalid_value)
 
 **Protocol Compliance Testing:**
 
-  Use ``isinstance`` checks and signature inspection::
+  Use ``hasattr`` checks and signature inspection::
 
-    from vibecontrols.interfaces import ControlDefinition
-    from vibecontrols.controls import BooleanDefinition
-
-    def test_protocol_compliance():
-        definition = BooleanDefinition( )
-        assert isinstance( definition, ControlDefinition )
+    assert hasattr(definition, 'validate_value')
+    assert hasattr(definition, 'produce_control')
+    assert callable(definition.validate_value)
 
 **Fixture Usage:**
 
-  Create reusable fixtures for common test objects::
+  Create reusable fixtures for common test objects in conftest.py or module
+  scope.
 
-    @pytest.fixture
-    def boolean_definition():
-        ''' Standard boolean definition for testing. '''
-        return BooleanDefinition( )
+Control Type: Text
+===============================================================================
 
-    @pytest.fixture
-    def boolean_control( boolean_definition ):
-        ''' Standard boolean control for testing. '''
-        return boolean_definition.produce_control( True )
+**Module:** ``sources/vibecontrols/controls/text.py``
+
+**Test Module:** ``test_410_controls_text.py``
+
+**Target Coverage:** 100%
+
+Key Features
+-------------------------------------------------------------------------------
+
+- String validation (strict type checking)
+- Length constraints (``count_min``, ``count_max``)
+- Type-specific method: ``clear()`` returns control with empty string
+- Multiline support (metadata only, no validation impact)
+
+Required Test Coverage
+-------------------------------------------------------------------------------
+
+**000-099: TextHints dataclass**
+
+- ``test_000_text_hints_default_creation`` - Create with all defaults
+- ``test_010_text_hints_with_widget`` - Set widget_preference (input)
+- ``test_015_text_hints_with_textarea`` - Set widget_preference (textarea)
+- ``test_020_text_hints_with_multiline`` - Set multiline flag
+- ``test_030_text_hints_with_placeholder`` - Set placeholder text
+- ``test_040_text_hints_with_label`` - Set label
+- ``test_050_text_hints_with_help`` - Set help_text
+- ``test_060_text_hints_all_fields`` - Set all fields together
+- ``test_070_text_hints_immutability`` - Cannot modify after creation
+
+**100-199: TextDefinition creation and configuration**
+
+- ``test_100_text_definition_default_creation`` - Create with all defaults
+- ``test_110_text_definition_custom_default`` - Set custom default string
+- ``test_120_text_definition_count_min`` - Set count_min only
+- ``test_130_text_definition_count_max`` - Set count_max only
+- ``test_140_text_definition_both_counts`` - Set both count_min and count_max
+- ``test_150_text_definition_custom_message`` - Set validation_message
+- ``test_160_text_definition_custom_hints`` - Set custom hints
+- ``test_170_text_definition_all_parameters`` - Set all parameters
+- ``test_180_text_definition_immutability`` - Cannot modify after creation
+- ``test_190_text_definition_invalid_negative_count_min`` - Negative count_min raises DefinitionInvalidity
+- ``test_191_text_definition_invalid_negative_count_max`` - Negative count_max raises DefinitionInvalidity
+- ``test_192_text_definition_invalid_min_exceeds_max`` - count_min > count_max raises DefinitionInvalidity
+
+**200-299: TextDefinition.validate_value()**
+
+- ``test_200_validate_value_valid_string`` - Valid non-empty string
+- ``test_210_validate_value_empty_string`` - Empty string (valid by default)
+- ``test_220_validate_value_long_string`` - Very long string
+- ``test_230_validate_value_unicode`` - Unicode characters (emoji, etc.)
+- ``test_240_validate_value_newlines`` - Strings with newline characters
+- ``test_250_validate_value_at_count_min`` - Exactly at count_min boundary
+- ``test_260_validate_value_at_count_max`` - Exactly at count_max boundary
+- ``test_270_validate_value_below_count_min`` - Below count_min raises SizeConstraintViolation
+- ``test_280_validate_value_above_count_max`` - Above count_max raises SizeConstraintViolation
+- ``test_290_validate_value_invalid_integer`` - Integer raises ControlInvalidity
+- ``test_291_validate_value_invalid_bool`` - Boolean raises ControlInvalidity
+- ``test_292_validate_value_invalid_none`` - None raises ControlInvalidity
+- ``test_293_validate_value_invalid_list`` - List raises ControlInvalidity
+- ``test_294_validate_value_custom_message`` - Custom message in exception
+
+**300-399: TextDefinition.produce_control()**
+
+- ``test_300_produce_control_no_initial`` - Use default value
+- ``test_310_produce_control_initial_valid`` - Set valid initial string
+- ``test_320_produce_control_initial_empty`` - Set empty initial string
+- ``test_330_produce_control_invalid_initial`` - Invalid initial raises exception
+- ``test_340_produce_control_absent`` - Explicit absent uses default
+- ``test_350_produce_control_returns_text`` - Returns Text control type
+- ``test_360_produce_control_immutability`` - Definition unchanged after production
+
+**400-499: TextDefinition.serialize_value()**
+
+- ``test_400_serialize_value_string`` - String serializes as-is
+- ``test_410_serialize_value_empty`` - Empty string serializes as-is
+- ``test_420_serialize_value_unicode`` - Unicode string serializes correctly
+
+**500-599: TextDefinition.produce_default()**
+
+- ``test_500_produce_default_empty`` - Default is empty string
+- ``test_510_produce_default_custom`` - Custom default respected
+
+**600-699: Text control creation and attributes**
+
+- ``test_600_text_control_creation`` - Create with definition and current
+- ``test_610_text_control_definition_attribute`` - Has definition attribute
+- ``test_620_text_control_current_attribute`` - Has current attribute
+- ``test_630_text_control_immutability`` - Cannot modify attributes
+
+**700-799: Text.copy()**
+
+- ``test_700_copy_to_new_string`` - Copy with new string value
+- ``test_710_copy_to_empty`` - Copy with empty string
+- ``test_720_copy_returns_new_instance`` - Returns different instance
+- ``test_730_copy_preserves_definition`` - Definition unchanged
+- ``test_740_copy_invalid_value`` - Invalid value raises ControlInvalidity
+- ``test_750_copy_original_unchanged`` - Original control unchanged
+
+**800-899: Text.clear()**
+
+- ``test_800_clear_returns_empty`` - clear() returns control with empty string
+- ``test_810_clear_returns_new_instance`` - Returns different instance
+- ``test_820_clear_preserves_definition`` - Definition unchanged
+- ``test_830_clear_original_unchanged`` - Original control unchanged
+- ``test_840_clear_with_count_min`` - clear() with count_min constraint (may violate if count_min > 0)
+
+**900-999: Text.serialize()**
+
+- ``test_900_serialize_string`` - Serialize non-empty string
+- ``test_910_serialize_empty`` - Serialize empty string
+- ``test_920_serialize_delegates_to_definition`` - Uses definition.serialize_value()
+
+**1000-1099: Integration scenarios**
+
+- ``test_1000_complete_lifecycle`` - Create → validate → update → serialize
+- ``test_1010_multiple_controls_same_definition`` - Share definition across controls
+- ``test_1020_controls_independent`` - Modifying one doesn't affect another
+- ``test_1030_protocol_compliance`` - Implements Control and ControlDefinition protocols
+
+Control Type: Interval
+===============================================================================
+
+**Module:** ``sources/vibecontrols/controls/interval.py``
+
+**Test Module:** ``test_420_controls_interval.py``
+
+**Target Coverage:** 100%
+
+Key Features
+-------------------------------------------------------------------------------
+
+- Numeric validation (int and float accepted)
+- Range constraints (``minimum``, ``maximum``)
+- Optional step validation (``grade`` for discrete intervals)
+- Type-specific methods: ``increment()``, ``decrement()``
+- Floating-point precision handling (``_FLOAT_EPSILON``)
+
+Required Test Coverage
+-------------------------------------------------------------------------------
+
+**000-099: IntervalHints dataclass**
+
+- ``test_000_interval_hints_default_creation`` - Create with all defaults
+- ``test_010_interval_hints_with_slider`` - Set widget_preference (slider)
+- ``test_015_interval_hints_with_spinbox`` - Set widget_preference (spinbox)
+- ``test_020_interval_hints_with_horizontal`` - Set orientation (horizontal)
+- ``test_025_interval_hints_with_vertical`` - Set orientation (vertical)
+- ``test_030_interval_hints_with_ticks`` - Set show_ticks flag
+- ``test_040_interval_hints_with_value`` - Set show_value flag
+- ``test_050_interval_hints_with_label`` - Set label
+- ``test_060_interval_hints_with_help`` - Set help_text
+- ``test_070_interval_hints_all_fields`` - Set all fields together
+- ``test_080_interval_hints_immutability`` - Cannot modify after creation
+
+**100-199: IntervalDefinition creation and configuration**
+
+- ``test_100_interval_definition_default_creation`` - Create with required parameters
+- ``test_110_interval_definition_with_grade`` - Set grade for discrete interval
+- ``test_120_interval_definition_without_grade`` - grade=None for continuous
+- ``test_130_interval_definition_custom_message`` - Set validation_message
+- ``test_140_interval_definition_custom_hints`` - Set custom hints
+- ``test_150_interval_definition_all_parameters`` - Set all parameters
+- ``test_160_interval_definition_immutability`` - Cannot modify after creation
+- ``test_170_interval_definition_invalid_non_numeric_minimum`` - Non-numeric minimum raises DefinitionInvalidity
+- ``test_171_interval_definition_invalid_non_numeric_maximum`` - Non-numeric maximum raises DefinitionInvalidity
+- ``test_172_interval_definition_invalid_non_numeric_default`` - Non-numeric default raises DefinitionInvalidity
+- ``test_173_interval_definition_invalid_minimum_exceeds_maximum`` - minimum > maximum raises DefinitionInvalidity
+- ``test_174_interval_definition_invalid_default_below_minimum`` - default < minimum raises DefinitionInvalidity
+- ``test_175_interval_definition_invalid_default_above_maximum`` - default > maximum raises DefinitionInvalidity
+- ``test_176_interval_definition_invalid_non_numeric_grade`` - Non-numeric grade raises DefinitionInvalidity
+- ``test_177_interval_definition_invalid_zero_grade`` - grade=0 raises DefinitionInvalidity
+- ``test_178_interval_definition_invalid_negative_grade`` - grade<0 raises DefinitionInvalidity
+
+**200-299: IntervalDefinition.validate_value()**
+
+- ``test_200_validate_value_valid_integer`` - Valid integer in range
+- ``test_210_validate_value_valid_float`` - Valid float in range
+- ``test_220_validate_value_at_minimum`` - Exactly at minimum boundary
+- ``test_230_validate_value_at_maximum`` - Exactly at maximum boundary
+- ``test_240_validate_value_below_minimum`` - Below minimum raises BoundsConstraintViolation
+- ``test_250_validate_value_above_maximum`` - Above maximum raises BoundsConstraintViolation
+- ``test_260_validate_value_continuous_no_grade`` - grade=None allows any value in range
+- ``test_270_validate_value_discrete_aligned`` - Value aligned with grade (valid)
+- ``test_280_validate_value_discrete_misaligned`` - Value misaligned with grade raises StepConstraintViolation
+- ``test_290_validate_value_floating_point_precision`` - Floating-point boundary precision
+- ``test_291_validate_value_negative_range`` - Values in negative range (minimum=-10, maximum=-1)
+- ``test_292_validate_value_range_with_zero`` - Values in range including zero
+- ``test_293_validate_value_small_grade`` - Very small grade (e.g., 0.01)
+- ``test_294_validate_value_invalid_string`` - String raises ControlInvalidity
+- ``test_295_validate_value_invalid_bool`` - Boolean raises ControlInvalidity
+- ``test_296_validate_value_invalid_none`` - None raises ControlInvalidity
+- ``test_297_validate_value_custom_message`` - Custom message in exception
+
+**300-399: IntervalDefinition.produce_control()**
+
+- ``test_300_produce_control_no_initial`` - Use default value
+- ``test_310_produce_control_initial_integer`` - Set valid initial integer
+- ``test_320_produce_control_initial_float`` - Set valid initial float
+- ``test_330_produce_control_invalid_initial`` - Invalid initial raises exception
+- ``test_340_produce_control_absent`` - Explicit absent uses default
+- ``test_350_produce_control_returns_interval`` - Returns Interval control type
+- ``test_360_produce_control_immutability`` - Definition unchanged after production
+
+**400-499: IntervalDefinition.serialize_value()**
+
+- ``test_400_serialize_value_integer`` - Integer serializes as-is
+- ``test_410_serialize_value_float`` - Float serializes as-is
+- ``test_420_serialize_value_at_boundary`` - Boundary values serialize correctly
+
+**500-599: IntervalDefinition.produce_default()**
+
+- ``test_500_produce_default`` - Produces configured default value
+- ``test_510_produce_default_custom`` - Custom default respected
+
+**600-699: Interval control creation and attributes**
+
+- ``test_600_interval_control_creation`` - Create with definition and current
+- ``test_610_interval_control_definition_attribute`` - Has definition attribute
+- ``test_620_interval_control_current_attribute`` - Has current attribute
+- ``test_630_interval_control_immutability`` - Cannot modify attributes
+
+**700-799: Interval.copy()**
+
+- ``test_700_copy_to_new_value`` - Copy with new numeric value
+- ``test_710_copy_to_minimum`` - Copy to minimum boundary
+- ``test_720_copy_to_maximum`` - Copy to maximum boundary
+- ``test_730_copy_returns_new_instance`` - Returns different instance
+- ``test_740_copy_preserves_definition`` - Definition unchanged
+- ``test_750_copy_invalid_value`` - Invalid value raises ControlInvalidity
+- ``test_760_copy_original_unchanged`` - Original control unchanged
+
+**800-899: Interval.increment() and Interval.decrement()**
+
+- ``test_800_increment_with_grade`` - Successful increment when grade defined
+- ``test_810_increment_at_maximum`` - Increment at maximum raises BoundsConstraintViolation
+- ``test_820_increment_returns_new_instance`` - Returns different instance
+- ``test_830_increment_preserves_definition`` - Definition unchanged
+- ``test_840_increment_without_grade`` - Increment with grade=None raises IncrementOperationFailure
+- ``test_850_decrement_with_grade`` - Successful decrement when grade defined
+- ``test_860_decrement_at_minimum`` - Decrement at minimum raises BoundsConstraintViolation
+- ``test_870_decrement_returns_new_instance`` - Returns different instance
+- ``test_880_decrement_preserves_definition`` - Definition unchanged
+- ``test_890_decrement_without_grade`` - Decrement with grade=None raises IncrementOperationFailure
+
+**900-999: Interval.serialize()**
+
+- ``test_900_serialize_integer`` - Serialize integer value
+- ``test_910_serialize_float`` - Serialize float value
+- ``test_920_serialize_delegates_to_definition`` - Uses definition.serialize_value()
+
+**1000-1099: Integration scenarios**
+
+- ``test_1000_complete_lifecycle`` - Create → validate → update → serialize
+- ``test_1010_multiple_controls_same_definition`` - Share definition across controls
+- ``test_1020_controls_independent`` - Modifying one doesn't affect another
+- ``test_1030_protocol_compliance`` - Implements Control and ControlDefinition protocols
+- ``test_1040_increment_decrement_chain`` - Chain multiple increment/decrement operations
+
+Control Type: Options
+===============================================================================
+
+**Module:** ``sources/vibecontrols/controls/options.py``
+
+**Test Module:** ``test_430_controls_options.py``
+
+**Target Coverage:** 100%
+
+Key Features
+-------------------------------------------------------------------------------
+
+- Selection from predefined choices
+- Single-select and multi-select support (``allow_multiple``)
+- Choice validation (value must be in choices)
+- No type-specific control methods beyond base protocol
+
+Required Test Coverage
+-------------------------------------------------------------------------------
+
+**000-099: OptionsHints dataclass**
+
+- ``test_000_options_hints_default_creation`` - Create with all defaults
+- ``test_010_options_hints_with_select`` - Set widget_preference (select)
+- ``test_015_options_hints_with_radio`` - Set widget_preference (radio)
+- ``test_020_options_hints_with_dropdown`` - Set widget_preference (dropdown)
+- ``test_030_options_hints_with_label`` - Set label
+- ``test_040_options_hints_with_help`` - Set help_text
+- ``test_050_options_hints_all_fields`` - Set all fields together
+- ``test_060_options_hints_immutability`` - Cannot modify after creation
+
+**100-199: OptionsDefinition creation and configuration**
+
+- ``test_100_options_definition_single_select`` - Create single-select (allow_multiple=False)
+- ``test_110_options_definition_multi_select`` - Create multi-select (allow_multiple=True)
+- ``test_120_options_definition_string_choices`` - Choices with strings
+- ``test_130_options_definition_integer_choices`` - Choices with integers
+- ``test_140_options_definition_mixed_type_choices`` - Choices with mixed types
+- ``test_150_options_definition_custom_message`` - Set validation_message
+- ``test_160_options_definition_custom_hints`` - Set custom hints
+- ``test_170_options_definition_all_parameters`` - Set all parameters
+- ``test_180_options_definition_immutability`` - Cannot modify after creation
+- ``test_190_options_definition_invalid_empty_choices`` - Empty choices raises DefinitionInvalidity
+- ``test_191_options_definition_invalid_default_not_in_choices_single`` - Default not in choices (single-select) raises DefinitionInvalidity
+- ``test_192_options_definition_invalid_default_not_in_choices_multi`` - Default not in choices (multi-select) raises DefinitionInvalidity
+
+**200-299: OptionsDefinition.validate_value()**
+
+- ``test_200_validate_value_single_valid`` - Valid choice for single-select
+- ``test_210_validate_value_single_invalid`` - Invalid choice for single-select raises ConstraintViolation
+- ``test_220_validate_value_multi_valid`` - Valid choices for multi-select
+- ``test_230_validate_value_multi_empty`` - Empty sequence for multi-select (valid if allowed)
+- ``test_240_validate_value_multi_single_item`` - Single item for multi-select
+- ``test_250_validate_value_multi_all_choices`` - All choices selected for multi-select
+- ``test_260_validate_value_multi_invalid_one`` - One invalid choice in multi-select raises ConstraintViolation
+- ``test_270_validate_value_multi_duplicates`` - Duplicate values in multi-select (behavior TBD)
+- ``test_280_validate_value_single_when_multi_expected`` - Single value when multi-select raises
+- ``test_290_validate_value_multi_when_single_expected`` - Multiple values when single-select raises
+- ``test_291_validate_value_custom_message`` - Custom message in exception
+
+**300-399: OptionsDefinition.produce_control()**
+
+- ``test_300_produce_control_no_initial_single`` - Use default value (single-select)
+- ``test_310_produce_control_no_initial_multi`` - Use default value (multi-select)
+- ``test_320_produce_control_initial_valid_single`` - Set valid initial (single-select)
+- ``test_330_produce_control_initial_valid_multi`` - Set valid initial (multi-select)
+- ``test_340_produce_control_invalid_initial`` - Invalid initial raises exception
+- ``test_350_produce_control_absent`` - Explicit absent uses default
+- ``test_360_produce_control_returns_options`` - Returns Options control type
+- ``test_370_produce_control_immutability`` - Definition unchanged after production
+
+**400-499: OptionsDefinition.serialize_value()**
+
+- ``test_400_serialize_value_single`` - Single choice serializes as value
+- ``test_410_serialize_value_multi`` - Multiple choices serialize as list
+- ``test_420_serialize_value_preserves_type`` - Original value type preserved
+
+**500-599: OptionsDefinition.produce_default()**
+
+- ``test_500_produce_default_single`` - Default single choice
+- ``test_510_produce_default_multi`` - Default multiple choices
+- ``test_520_produce_default_custom`` - Custom default respected
+
+**600-699: Options control creation and attributes**
+
+- ``test_600_options_control_creation`` - Create with definition and current
+- ``test_610_options_control_definition_attribute`` - Has definition attribute
+- ``test_620_options_control_current_attribute`` - Has current attribute
+- ``test_630_options_control_immutability`` - Cannot modify attributes
+
+**700-799: Options.copy()**
+
+- ``test_700_copy_to_new_choice_single`` - Copy with new choice (single-select)
+- ``test_710_copy_to_new_choices_multi`` - Copy with new choices (multi-select)
+- ``test_720_copy_returns_new_instance`` - Returns different instance
+- ``test_730_copy_preserves_definition`` - Definition unchanged
+- ``test_740_copy_invalid_value`` - Invalid value raises ConstraintViolation
+- ``test_750_copy_original_unchanged`` - Original control unchanged
+
+**800-899: (Reserved for type-specific methods - none currently)**
+
+**900-999: Options.serialize()**
+
+- ``test_900_serialize_single`` - Serialize single selection
+- ``test_910_serialize_multi`` - Serialize multiple selections
+- ``test_920_serialize_delegates_to_definition`` - Uses definition.serialize_value()
+
+**1000-1099: Integration scenarios**
+
+- ``test_1000_complete_lifecycle`` - Create → validate → update → serialize
+- ``test_1010_multiple_controls_same_definition`` - Share definition across controls
+- ``test_1020_controls_independent`` - Modifying one doesn't affect another
+- ``test_1030_protocol_compliance`` - Implements Control and ControlDefinition protocols
+- ``test_1040_single_choice_edge_case`` - Single choice in choices (only one valid option)
+- ``test_1050_many_choices`` - Many choices (>100) performance
+
+Control Type: Array
+===============================================================================
+
+**Module:** ``sources/vibecontrols/controls/array.py``
+
+**Test Module:** ``test_440_controls_array.py``
+
+**Target Coverage:** 100%
+
+**Complexity:** Highest - supports recursion and multiple operations
+
+Key Features
+-------------------------------------------------------------------------------
+
+- Recursive element validation via ``element_definition``
+- Size constraints (``size_min``, ``size_max``)
+- Duplicate detection (``allow_duplicates``)
+- Type-specific methods:
+
+  - ``append(element)`` - add to end
+  - ``remove_at(index)`` - remove by position
+  - ``insert_at(index, element)`` - insert at position
+  - ``reorder(new_order)`` - rearrange by index sequence
+
+- Supports nesting (Array of Arrays, Array of any control type)
+
+Required Test Coverage
+-------------------------------------------------------------------------------
+
+**000-099: ArrayHints dataclass**
+
+- ``test_000_array_hints_default_creation`` - Create with all defaults
+- ``test_010_array_hints_with_vertical`` - Set orientation (vertical)
+- ``test_015_array_hints_with_horizontal`` - Set orientation (horizontal)
+- ``test_020_array_hints_with_grid`` - Set orientation (grid)
+- ``test_030_array_hints_with_collapsible`` - Set collapsible flag
+- ``test_040_array_hints_with_initially_collapsed`` - Set initially_collapsed
+- ``test_050_array_hints_with_border`` - Set border flag
+- ``test_060_array_hints_with_title`` - Set title
+- ``test_070_array_hints_with_label`` - Set label
+- ``test_080_array_hints_with_help`` - Set help_text
+- ``test_090_array_hints_all_fields`` - Set all fields together
+- ``test_095_array_hints_immutability`` - Cannot modify after creation
+
+**100-199: ArrayDefinition creation and configuration**
+
+- ``test_100_array_definition_simple_elements`` - Create with simple element type (e.g., Boolean)
+- ``test_110_array_definition_with_size_min`` - Set size_min constraint
+- ``test_120_array_definition_with_size_max`` - Set size_max constraint
+- ``test_130_array_definition_with_both_sizes`` - Set both size_min and size_max
+- ``test_140_array_definition_fixed_size`` - size_min == size_max (fixed size)
+- ``test_150_array_definition_with_default_elements`` - Set default_elements
+- ``test_160_array_definition_allow_duplicates_false`` - Disallow duplicates
+- ``test_170_array_definition_custom_hints`` - Set custom hints
+- ``test_180_array_definition_all_parameters`` - Set all parameters
+- ``test_190_array_definition_immutability`` - Cannot modify after creation
+- ``test_191_array_definition_invalid_negative_size_min`` - Negative size_min raises DefinitionInvalidity
+- ``test_192_array_definition_invalid_negative_size_max`` - Negative size_max raises DefinitionInvalidity
+- ``test_193_array_definition_invalid_min_exceeds_max`` - size_min > size_max raises DefinitionInvalidity
+- ``test_194_array_definition_invalid_default_below_min`` - len(default_elements) < size_min raises DefinitionInvalidity
+- ``test_195_array_definition_invalid_default_above_max`` - len(default_elements) > size_max raises DefinitionInvalidity
+
+**200-299: ArrayDefinition.validate_value()**
+
+- ``test_200_validate_value_valid_array`` - Valid array of elements
+- ``test_210_validate_value_empty_array`` - Empty array (valid if size_min=0)
+- ``test_220_validate_value_single_element`` - Single element array
+- ``test_230_validate_value_at_size_min`` - Exactly at size_min boundary
+- ``test_240_validate_value_at_size_max`` - Exactly at size_max boundary
+- ``test_250_validate_value_below_size_min`` - Below size_min raises SizeConstraintViolation
+- ``test_260_validate_value_above_size_max`` - Above size_max raises SizeConstraintViolation
+- ``test_270_validate_value_invalid_element_type`` - Wrong element type raises ControlInvalidity
+- ``test_280_validate_value_element_constraint_violation`` - Element constraint violation raises
+- ``test_290_validate_value_with_duplicates_allowed`` - Duplicates valid when allowed
+- ``test_291_validate_value_with_duplicates_disallowed`` - Duplicates raise when disallowed
+- ``test_292_validate_value_invalid_not_sequence`` - Non-sequence raises ControlInvalidity
+- ``test_293_validate_value_tuple_sequence`` - Tuple input (valid, converted to tuple internally)
+- ``test_294_validate_value_list_sequence`` - List input (valid, converted to tuple)
+
+**300-399: ArrayDefinition.produce_control()**
+
+- ``test_300_produce_control_no_initial`` - Use default_elements
+- ``test_310_produce_control_initial_valid`` - Set valid initial array
+- ``test_320_produce_control_initial_empty`` - Set empty initial array
+- ``test_330_produce_control_invalid_initial`` - Invalid initial raises exception
+- ``test_340_produce_control_absent`` - Explicit absent uses default
+- ``test_350_produce_control_returns_array`` - Returns Array control type
+- ``test_360_produce_control_immutability`` - Definition unchanged after production
+
+**400-499: ArrayDefinition.serialize_value()**
+
+- ``test_400_serialize_value_array`` - Array serializes as list
+- ``test_410_serialize_value_empty`` - Empty array serializes as empty list
+- ``test_420_serialize_value_nested`` - Nested array serializes recursively
+- ``test_430_serialize_value_preserves_order`` - Order preserved in serialization
+
+**500-599: ArrayDefinition.produce_default()**
+
+- ``test_500_produce_default_empty`` - Default is empty tuple
+- ``test_510_produce_default_with_elements`` - Default elements respected
+
+**600-699: Array control creation and attributes**
+
+- ``test_600_array_control_creation`` - Create with definition and current
+- ``test_610_array_control_definition_attribute`` - Has definition attribute
+- ``test_620_array_control_current_attribute`` - Has current attribute (tuple)
+- ``test_630_array_control_immutability`` - Cannot modify attributes
+
+**700-799: Array.copy()**
+
+- ``test_700_copy_to_new_array`` - Copy with new array value
+- ``test_710_copy_to_empty`` - Copy to empty array
+- ``test_720_copy_returns_new_instance`` - Returns different instance
+- ``test_730_copy_preserves_definition`` - Definition unchanged
+- ``test_740_copy_invalid_value`` - Invalid value raises ControlInvalidity
+- ``test_750_copy_original_unchanged`` - Original control unchanged
+
+**800-899: Array.append()**
+
+- ``test_800_append_valid_element`` - Successful append
+- ``test_810_append_at_size_max`` - Append when at size_max raises SizeConstraintViolation
+- ``test_820_append_invalid_element`` - Invalid element raises ControlInvalidity
+- ``test_830_append_returns_new_instance`` - Returns different instance
+- ``test_840_append_preserves_definition`` - Definition unchanged
+- ``test_850_append_original_unchanged`` - Original array unchanged
+
+**900-999: Array.remove_at()**
+
+- ``test_900_remove_at_valid_index`` - Successful removal
+- ``test_910_remove_at_first`` - Remove first element (index 0)
+- ``test_920_remove_at_last`` - Remove last element
+- ``test_930_remove_at_size_min`` - Remove when at size_min raises SizeConstraintViolation
+- ``test_940_remove_at_invalid_negative_index`` - Negative index raises IndexError
+- ``test_950_remove_at_invalid_beyond_length`` - Index >= length raises IndexError
+- ``test_960_remove_at_returns_new_instance`` - Returns different instance
+- ``test_970_remove_at_preserves_definition`` - Definition unchanged
+- ``test_980_remove_at_original_unchanged`` - Original array unchanged
+
+**1000-1099: Array.insert_at()**
+
+- ``test_1000_insert_at_beginning`` - Insert at index 0
+- ``test_1010_insert_at_middle`` - Insert at middle index
+- ``test_1020_insert_at_end`` - Insert at end (equivalent to append)
+- ``test_1030_insert_at_size_max`` - Insert when at size_max raises SizeConstraintViolation
+- ``test_1040_insert_at_invalid_element`` - Invalid element raises ControlInvalidity
+- ``test_1050_insert_at_invalid_index`` - Invalid index raises IndexError
+- ``test_1060_insert_at_returns_new_instance`` - Returns different instance
+- ``test_1070_insert_at_preserves_definition`` - Definition unchanged
+- ``test_1080_insert_at_original_unchanged`` - Original array unchanged
+
+**1100-1199: Array.reorder()**
+
+- ``test_1100_reorder_valid_permutation`` - Valid reordering
+- ``test_1110_reorder_reverse`` - Reverse order
+- ``test_1120_reorder_partial_swap`` - Swap two elements
+- ``test_1130_reorder_no_change`` - Same order (identity permutation)
+- ``test_1140_reorder_invalid_wrong_count`` - Wrong number of indices raises
+- ``test_1150_reorder_invalid_out_of_range`` - Index out of range raises
+- ``test_1160_reorder_invalid_duplicates`` - Duplicate indices raises
+- ``test_1170_reorder_returns_new_instance`` - Returns different instance
+- ``test_1180_reorder_preserves_definition`` - Definition unchanged
+- ``test_1190_reorder_original_unchanged`` - Original array unchanged
+
+**1200-1299: Array.serialize()**
+
+- ``test_1200_serialize_simple_elements`` - Serialize array of simple elements
+- ``test_1210_serialize_nested_arrays`` - Serialize nested arrays
+- ``test_1220_serialize_delegates_to_definition`` - Uses definition.serialize_value()
+
+**1300-1399: Integration scenarios**
+
+- ``test_1300_complete_lifecycle`` - Create → validate → update → serialize
+- ``test_1310_multiple_controls_same_definition`` - Share definition across controls
+- ``test_1320_controls_independent`` - Modifying one doesn't affect another
+- ``test_1330_protocol_compliance`` - Implements Control and ControlDefinition protocols
+- ``test_1340_nested_single_level`` - Array of Arrays (single nesting)
+- ``test_1350_nested_multiple_levels`` - Array of Arrays of Arrays (deep nesting)
+- ``test_1360_mixed_operations_chain`` - Chain append, remove, insert, reorder
+- ``test_1370_size_constraint_interactions`` - Size constraints with all operations
+- ``test_1380_duplicate_detection`` - Duplicate handling when allow_duplicates=False
+
+Implementation Notes
+===============================================================================
+
+Testing Patterns Specific to Each Type
+-------------------------------------------------------------------------------
+
+**Text:**
+
+- Focus on string validation and length constraints
+- Empty string is valid edge case
+- ``clear()`` method must be tested for immutability
+
+**Interval:**
+
+- Focus on numeric validation and range constraints
+- Floating-point precision critical for grade alignment
+- ``increment()``/``decrement()`` must check boundaries
+
+**Options:**
+
+- Focus on selection from finite set
+- Choice dataclass adds complexity (value + label)
+- Empty choices set is invalid definition
+
+**Array:**
+
+- Most complex - recursive structure
+- Each operation must maintain immutability
+- Size constraints interact with all operations
+- Element validation must be tested thoroughly
 
 Dependencies and Injection
 -------------------------------------------------------------------------------
@@ -591,16 +842,22 @@ Dependencies and Injection
 **Test Isolation:**
   Each test is independent. No shared mutable state between tests.
 
-Test Data Organization
+Fixture Organization
 -------------------------------------------------------------------------------
 
-**No External Test Data:**
-  All test data is inline in test functions or simple fixtures. No external
-  files needed for this test plan (in-memory focus).
+**Common Fixtures (in conftest.py or module scope):**
 
-**Future Consideration:**
-  When serialization testing is added, may need test data files under
-  ``tests/data/`` for TOML descriptors and JSON fixtures.
+- Sample definitions for each control type
+- Sample controls for each type
+- Reusable validators
+- Exception matchers
+
+**Type-Specific Fixtures:**
+
+- Text: various length constraint combinations
+- Interval: continuous vs discrete definitions
+- Options: few vs many choices, with/without labels
+- Array: simple element types, nested arrays, various size constraints
 
 Private Function Testing
 -------------------------------------------------------------------------------
@@ -609,38 +866,35 @@ Private Function Testing
   All classes tested here have only public methods. Private functions should
   be tested through public API only.
 
-**Protocol Methods:**
-  Abstract methods in protocols are tested through concrete implementations
-  (Boolean control type).
+**Constants:**
+  Module-level constants like ``_FLOAT_EPSILON`` in interval.py are tested
+  indirectly through grade validation tests.
 
 Test Module Numbering Rationale
 -------------------------------------------------------------------------------
 
-**Proposed Numbering:**
+**Chosen Numbering:**
 
-- ``test_100_exceptions.py`` - Lowest level, no dependencies
-- ``test_200_interfaces.py`` - Depends on exceptions, tested via Boolean
-- ``test_300_validation.py`` - Depends on exceptions
-- ``test_400_controls_boolean.py`` - Depends on all above
+- ``test_410_controls_text.py`` - Next after Boolean (400)
+- ``test_420_controls_interval.py`` - After Text
+- ``test_430_controls_options.py`` - After Interval
+- ``test_440_controls_array.py`` - Last (most complex)
 
-**Alternatives Considered:**
+**Rationale:**
 
-- Using ``test_1X0_`` for subpackage modules (e.g., ``test_410_controls_boolean.py``)
-
-  **Decision:** Keep simple numbering for now. Use ``4X0`` range if more
-  control types added (e.g., ``test_410_controls_boolean.py``,
-  ``test_420_controls_text.py``, etc.).
+- Increments of 10 allow for insertion of related tests later
+- Complexity increases: Text (simplest) → Array (most complex)
+- Dependencies: Array may use other control types as elements
 
 Linter Suppressions
 -------------------------------------------------------------------------------
 
 **Acceptable Suppressions:**
 
-- ``# type: ignore[return-value]`` in ``boolean.py:145`` - Already present in
-  source, acceptable for Self return type
-- Test functions may use ``# noqa: PLR0913`` if many parameters needed
+- ``# type: ignore[return-value]`` for Self return types (if needed)
+- Test functions may use ``# noqa`` for long parameter lists if required
 
-**No ``type: ignore`` in Tests:**
+**Minimize Suppressions:**
   Tests should be fully typed without suppressions where possible.
 
 Success Metrics
@@ -649,15 +903,18 @@ Success Metrics
 Coverage Targets
 -------------------------------------------------------------------------------
 
-**Line Coverage:**
-  - ``exceptions.py``: 100% (currently 43%)
-  - ``interfaces.py``: 100% (currently 0%)
-  - ``validation.py``: 100% (currently 0%)
-  - ``controls/boolean.py``: 100% (currently 0%)
+**Per Module:**
+
+- ``text.py``: 100% line coverage (currently 39%)
+- ``interval.py``: 100% line coverage (currently 28%)
+- ``options.py``: 100% line coverage (currently 24%)
+- ``array.py``: 100% line coverage (currently 24%)
 
 **Branch Coverage:**
-  - All conditional paths in validators: 100%
-  - All error handling paths: 100%
+
+- All conditional paths in validators: 100%
+- All error handling paths: 100%
+- All ``__post_init__`` validations: 100%
 
 Functional Completeness
 -------------------------------------------------------------------------------
@@ -666,14 +923,15 @@ Functional Completeness
   All planned tests must pass with no skips or xfails.
 
 **Protocol Compliance Verified:**
-  Boolean control type must demonstrably satisfy both Control and
-  ControlDefinition protocols.
+  All control types must demonstrably satisfy Control and ControlDefinition
+  protocols.
 
 **Immutability Enforced:**
   All immutability tests must confirm objects cannot be mutated.
 
-**Exception Hierarchy Validated:**
-  All exceptions must be catchable at appropriate levels of the hierarchy.
+**Type-Specific Methods Verified:**
+  All type-specific methods (toggle, clear, increment, decrement, array
+  operations) must be fully tested.
 
 Test Quality Standards
 -------------------------------------------------------------------------------
@@ -688,88 +946,88 @@ Test Quality Standards
   Use fixtures and helper functions to avoid repeating test setup.
 
 **Fast Execution:**
-  All tests run in memory, target < 2 seconds for full test suite.
+  All tests run in memory, target < 5 seconds for full control type test suite.
 
 Implementation Priorities
 -------------------------------------------------------------------------------
 
-**Phase 1 (Immediate):**
+**Recommended Order:**
 
-  1. ``test_100_exceptions.py`` - Foundation for error handling
-  2. ``test_300_validation.py`` - Needed by Boolean control
+1. **Text** (~4 hours) - Simplest after Boolean, straightforward constraints
+2. **Interval** (~4 hours) - Moderate complexity with grade validation
+3. **Options** (~4 hours) - Moderate complexity with Choice dataclass
+4. **Array** (~6 hours) - Most complex with recursion and multiple operations
 
-**Phase 2 (Next):**
-
-  3. ``test_400_controls_boolean.py`` - Complete Boolean implementation coverage
-  4. ``test_200_interfaces.py`` - Protocol compliance verification
+**Total Estimated Effort:** 18 hours
 
 **Rationale:**
-  Exceptions and validators are needed first. Boolean control can be tested
-  before protocol compliance tests since the latter uses Boolean as an example.
+  Build from simple to complex. Text and Interval are independent. Options
+  is independent. Array is most complex and can leverage understanding from
+  simpler types.
 
 Potential Challenges and Mitigations
 ===============================================================================
 
-Challenge 1: Testing Abstract Protocols
+Challenge 1: Floating-Point Precision (Interval)
 -------------------------------------------------------------------------------
 
 **Problem:**
-  Protocols with ``@abstractmethod`` cannot be instantiated directly for testing.
+  Grade alignment testing requires careful floating-point comparison.
 
 **Mitigation:**
-  - Test protocol structure through inspection (``hasattr``, ``getattr``)
-  - Test protocol compliance through concrete implementation (Boolean)
-  - Verify ``isinstance`` checks work correctly
-  - Document that protocols are tested via Boolean in test docstrings
+  - Use module constant ``_FLOAT_EPSILON = 1e-10``
+  - Test values known to align exactly
+  - Test values known to misalign
+  - Document precision expectations in tests
 
-Challenge 2: Immutability Verification
+Challenge 2: Choice Dataclass Complexity (Options)
 -------------------------------------------------------------------------------
 
 **Problem:**
-  Verifying immutability requires careful test design to detect mutations.
+  Choice has value + label, but validation uses value only.
 
 **Mitigation:**
-  - Store original values before operations
-  - Assert original unchanged after operations
-  - Use ``id()`` to verify new instances created
-  - Test that direct attribute assignment raises AttributeError (if applicable)
+  - Test Choice creation separately from Options validation
+  - Verify label is preserved but not used in validation
+  - Test choice equality (should compare by value)
+  - Document label as metadata
 
-Challenge 3: Strict Boolean Type Checking
+Challenge 3: Array Recursion (Array)
 -------------------------------------------------------------------------------
 
 **Problem:**
-  Python's bool is a subclass of int, making type checking tricky.
+  Nested arrays can create complex test scenarios.
 
 **Mitigation:**
-  - Test that integers (0, 1) are rejected
-  - Test that only ``True`` and ``False`` pass
-  - Use ``type(value) is bool`` rather than ``isinstance`` in implementation
-  - Document this strictness in tests
+  - Start with simple element types (Boolean)
+  - Add single-level nesting tests
+  - Add multi-level nesting tests progressively
+  - Use fixtures for common nested structures
+  - Test depth limits if any
 
-Challenge 4: Validator Message Generation
+Challenge 4: Size Constraints on Array Operations
 -------------------------------------------------------------------------------
 
 **Problem:**
-  Validators auto-generate messages in ``__post_init__``. Testing requires
-  verifying both auto-generated and custom messages.
+  Every array operation must validate size constraints.
 
 **Mitigation:**
-  - Test default message generation separately from custom messages
-  - Inspect ``message`` attribute after creation
-  - Verify messages appear in raised exceptions
-  - Test edge cases (single type vs multiple types, few vs many choices)
+  - Create fixtures with arrays at size boundaries
+  - Test each operation at size_min and size_max
+  - Test operations that would violate constraints
+  - Verify exception types and messages
 
-Challenge 5: Coverage of ``__post_init__``
+Challenge 5: Test Suite Performance
 -------------------------------------------------------------------------------
 
 **Problem:**
-  DataclassObject ``__post_init__`` methods may not show in coverage without
-  explicit testing.
+  Large test suites can slow down development feedback.
 
 **Mitigation:**
-  - Create instances with various parameter combinations
-  - Verify computed attributes (messages) are correct
-  - Test both default and custom message paths
+  - Keep tests focused and fast (in-memory only)
+  - Use pytest markers for subsets (e.g., ``@pytest.mark.text``)
+  - Avoid redundant test setup
+  - Use fixtures efficiently
 
 Architectural Recommendations
 ===============================================================================
@@ -784,36 +1042,30 @@ Testability Assessment
   - Immutable by design (no hidden state mutations)
   - No external dependencies (all in-memory)
   - Protocol-based design enables testing through concrete types
+  - Each control type is self-contained
 
 **No Architectural Changes Needed:**
-  The current design is already highly testable. No refactoring required to
-  achieve 100% coverage.
+  The current design is highly testable. No refactoring required to achieve
+  100% coverage for any control type.
 
 Future Enhancements for Testing
 -------------------------------------------------------------------------------
 
-**Test README Documentation:**
-  Create ``tests/README.md`` documenting:
+**Property-Based Testing (Optional):**
+  Consider adding Hypothesis tests for validators:
 
-  - Test module numbering scheme (100=exceptions, 200=protocols, etc.)
-  - Testing patterns specific to this project
-  - Fixture usage conventions
-  - No rationale for ``patch`` needed (none used)
-
-**Hypothesis Property-Based Testing:**
-  Consider adding property-based tests for validators:
-
-  - ``ClassValidator``: any value of correct type should pass
-  - ``IntervalValidator``: any value in range should pass
-  - ``SelectionValidator``: any choice in set should pass
+  - Any string within length constraints should pass Text validation
+  - Any number in range should pass Interval validation
+  - Any value in choices should pass Options validation
+  - Any array within size constraints should pass Array validation
 
   **Benefit:** Catches edge cases not covered by example-based tests.
 
-**Performance Benchmarking:**
-  While correctness is prioritized, consider simple benchmarks:
+**Performance Benchmarking (Optional):**
+  While correctness is prioritized, simple benchmarks could be useful:
 
-  - Validator performance (target: < 1ms per validation)
   - Control creation performance (target: < 1ms per creation)
+  - Array operation performance (especially for large arrays)
 
   **Note:** Only add if performance issues arise in practice.
 
@@ -825,56 +1077,53 @@ Areas Requiring ``# pragma: no cover``
   no platform-specific branches, no impossible-to-trigger paths identified.
 
 **Abstract Methods in Protocols:**
-  The ``...`` bodies of abstract methods in protocols are typically uncovered,
-  but this is acceptable as they are not meant to be executed. Coverage tools
-  may or may not flag these.
+  The ``...`` bodies of abstract methods in protocols (interfaces.py) are
+  typically uncovered, but this is acceptable as they are not meant to be
+  executed.
 
-  **If flagged:** May use ``# pragma: no cover`` on ``...`` in protocols only.
+  **Current:** 76% coverage in interfaces.py is acceptable. The 6 missing
+  statements are abstract method bodies.
 
 Test Implementation Timeline
 ===============================================================================
 
-Estimated Effort
--------------------------------------------------------------------------------
-
-**Per Module:**
-
-  - ``test_100_exceptions.py``: ~2 hours (simple, ~25 tests)
-  - ``test_300_validation.py``: ~6 hours (complex, ~60 tests)
-  - ``test_400_controls_boolean.py``: ~4 hours (comprehensive, ~40 tests)
-  - ``test_200_interfaces.py``: ~2 hours (depends on Boolean, ~20 tests)
-
-**Total:** Approximately 14 hours for complete implementation
-
-**Assumptions:**
-
-  - Experienced with pytest and project testing patterns
-  - No unexpected issues with frigid DataclassObject behavior
-  - Existing source code is correct and doesn't require fixes
-
 Sequential Implementation Order
 -------------------------------------------------------------------------------
 
-**Session 1:**
+**Session 1: Text Control**
 
-  1. ``test_100_exceptions.py`` - Quick foundation
-  2. Start ``test_300_validation.py`` - CompositeValidator and ClassValidator
+  1. Implement test_410_controls_text.py (~4 hours)
+  2. Verify 100% coverage for text.py
+  3. Ensure all tests pass
+  4. Commit
 
-**Session 2:**
+**Session 2: Interval Control**
 
-  3. Complete ``test_300_validation.py`` - Remaining validators
-  4. Start ``test_400_controls_boolean.py`` - BooleanHints, BooleanDefinition
+  1. Implement test_420_controls_interval.py (~4 hours)
+  2. Verify 100% coverage for interval.py
+  3. Ensure all tests pass
+  4. Commit
 
-**Session 3:**
+**Session 3: Options Control**
 
-  5. Complete ``test_400_controls_boolean.py`` - Boolean control and integration
-  6. ``test_200_interfaces.py`` - Protocol compliance using Boolean
+  1. Implement test_430_controls_options.py (~4 hours)
+  2. Verify 100% coverage for options.py
+  3. Ensure all tests pass
+  4. Commit
 
-**Session 4:**
+**Session 4: Array Control**
 
-  7. Review coverage reports
-  8. Fill any gaps
-  9. Update ``tests/README.md`` (create if needed)
+  1. Implement test_440_controls_array.py (~6 hours)
+  2. Verify 100% coverage for array.py
+  3. Ensure all tests pass
+  4. Commit
+
+**Session 5: Final Review**
+
+  1. Review coverage reports for all modules
+  2. Fill any remaining gaps
+  3. Update documentation
+  4. Final commit
 
 Final Validation
 ===============================================================================
@@ -882,16 +1131,19 @@ Final Validation
 Checklist Before Completion
 -------------------------------------------------------------------------------
 
-- [ ] All planned test modules created and passing
-- [ ] ``hatch --env develop run coverage report`` shows 100% for target modules
-- [ ] No ``# pragma: no cover`` used (except possibly protocol ``...`` bodies)
+- [ ] test_410_controls_text.py created and passing
+- [ ] test_420_controls_interval.py created and passing
+- [ ] test_430_controls_options.py created and passing
+- [ ] test_440_controls_array.py created and passing
+- [ ] Coverage report shows 100% for all control type modules
+- [ ] No ``# pragma: no cover`` used (except protocol abstract methods)
 - [ ] All tests have single-line docstrings
 - [ ] Test function numbering follows plan
 - [ ] No monkey-patching used anywhere
 - [ ] No external services or network calls
-- [ ] ``hatch --env develop run linters`` passes
-- [ ] ``hatch --env develop run testers`` completes under 2 seconds
-- [ ] ``tests/README.md`` updated with new test module numbering
+- [ ] All linters pass
+- [ ] All tests complete in < 10 seconds total
+- [ ] This test plan updated with any lessons learned
 
 Post-Implementation Review
 -------------------------------------------------------------------------------
@@ -900,24 +1152,18 @@ Post-Implementation Review
 
   Run coverage report and verify 100% line coverage for::
 
-    sources/vibecontrols/exceptions.py
-    sources/vibecontrols/interfaces.py
-    sources/vibecontrols/validation.py
-    sources/vibecontrols/controls/boolean.py
+    sources/vibecontrols/controls/text.py
+    sources/vibecontrols/controls/interval.py
+    sources/vibecontrols/controls/options.py
+    sources/vibecontrols/controls/array.py
 
 **Manual Testing:**
 
-  Import and exercise key paths manually in Python REPL:
-
-  - Create Boolean definition
-  - Produce control
-  - Update control
-  - Toggle control
-  - Test validation failures
+  Import and exercise key paths manually in Python REPL for each type.
 
 **Integration Verification:**
 
-  Verify Boolean control works end-to-end without serialization:
+  Verify all control types work end-to-end without serialization:
 
   - Definition → Control → Updates → Values
 
@@ -925,39 +1171,35 @@ Next Test Plans
 ===============================================================================
 
 **Serialization and Deserialization:**
-  Separate test plan for JSON/TOML serialization:
+  Separate test plan for TOML/JSON serialization:
 
-  - ``test_500_serialization_json.py``
-  - ``test_600_serialization_toml.py`` (descriptor parsing)
-
-**Additional Control Types:**
-  As more control types are implemented:
-
-  - ``test_410_controls_text.py``
-  - ``test_420_controls_interval.py``
-  - ``test_430_controls_options.py``
-  - ``test_440_controls_array.py``
+  - Descriptor parsing (TOML → Definition)
+  - Control serialization (Control → JSON)
+  - Roundtrip testing (TOML → Definition → Control → JSON → Control)
+  - Type registry (BUILTIN_TYPES, descriptor_to_definition)
+  - Nested structures (Array with nested definitions)
 
 **Cross-Control Integration:**
-  Once multiple control types exist:
+  Once multiple control types exist and serialization works:
 
-  - ``test_700_control_collections.py`` (managing multiple controls)
-  - ``test_800_control_registry.py`` (type registry and descriptor_to_definition)
+  - Control collections (managing multiple controls together)
+  - Control dependencies (if implemented)
+  - Control state synchronization (if implemented)
 
 Conclusion
 ===============================================================================
 
 This test plan provides a systematic approach to achieving 100% test coverage
-for control definitions and in-memory control production. The plan follows
-project testing principles:
+for all control type definitions and in-memory control production. The plan
+follows project testing principles:
 
 - **Dependency injection over monkey-patching**
 - **Systematic coverage of all code paths**
 - **Clean test organization with numbered modules**
 - **Immutability verification at every step**
+- **Standardized test structure across all control types**
 
-The current architecture is highly testable with no changes needed. All code
-can be fully tested through the public API using real objects and dependency
-injection.
+All control types must follow the same structural pattern with type-specific
+variations for unique features, constraints, and operations.
 
 **Ready for implementation.**
