@@ -22,7 +22,8 @@
 
 
 from . import __
-from .exceptions import ConstraintViolation, ControlInvalidity
+from .exceptions import ConstraintViolation as _ConstraintViolation
+from .exceptions import ControlInvalidity as _ControlInvalidity
 
 
 class Validator( __.immut.DataclassProtocol, __.typx.Protocol ):
@@ -44,7 +45,7 @@ class Validator( __.immut.DataclassProtocol, __.typx.Protocol ):
     ) -> __.typx.Annotated[
         __.typx.Any,
         __.ddoc.Doc( "Validated (and possibly transformed) value." ),
-        __.ddoc.Raises( ControlInvalidity, "If validation fails." )
+        __.ddoc.Raises( _ControlInvalidity, "If validation fails." )
     ]:
         ''' Validates value, returning validated/transformed value. '''
         ...
@@ -75,7 +76,7 @@ class CompositeValidator( Validator ):
     ) -> __.typx.Annotated[
         __.typx.Any,
         __.ddoc.Doc( "Validated value after all validators." ),
-        __.ddoc.Raises( ControlInvalidity, "If any validator fails." )
+        __.ddoc.Raises( _ControlInvalidity, "If any validator fails." )
     ]:
         ''' Applies validators in sequence. '''
         result = value
@@ -124,11 +125,11 @@ class ClassValidator( Validator ):
     ) -> __.typx.Annotated[
         __.typx.Any,
         __.ddoc.Doc( "Value if type is correct." ),
-        __.ddoc.Raises( ControlInvalidity, "If value is wrong type." )
+        __.ddoc.Raises( _ControlInvalidity, "If value is wrong type." )
     ]:
         ''' Validates value type. '''
         if not isinstance( value, self.expected_type ):
-            raise ControlInvalidity( self.message )
+            raise _ControlInvalidity( self.message )
         return value
 
 
@@ -170,11 +171,11 @@ class IntervalValidator( Validator ):
     ) -> __.typx.Annotated[
         __.typx.Any,
         __.ddoc.Doc( "Value if in range." ),
-        __.ddoc.Raises( ConstraintViolation, "If value is out of range." )
+        __.ddoc.Raises( _ConstraintViolation, "If value is out of range." )
     ]:
         ''' Validates value is in range. '''
         if not self.minimum <= value <= self.maximum:
-            raise ConstraintViolation( self.message )
+            raise _ConstraintViolation( self.message )
         return value
 
 
@@ -230,14 +231,14 @@ class SizeValidator( Validator ):
     ) -> __.typx.Annotated[
         __.typx.Any,
         __.ddoc.Doc( "Value if length is valid." ),
-        __.ddoc.Raises( ConstraintViolation, "If length is invalid." )
+        __.ddoc.Raises( _ConstraintViolation, "If length is invalid." )
     ]:
         ''' Validates value length. '''
         length = len( value )
         if self.min_length is not None and length < self.min_length:
-            raise ConstraintViolation( self.message )
+            raise _ConstraintViolation( self.message )
         if self.max_length is not None and length > self.max_length:
-            raise ConstraintViolation( self.message )
+            raise _ConstraintViolation( self.message )
         return value
 
 
@@ -289,9 +290,9 @@ class SelectionValidator( Validator ):
     ) -> __.typx.Annotated[
         __.typx.Any,
         __.ddoc.Doc( "Value if it's an allowed choice." ),
-        __.ddoc.Raises( ConstraintViolation, "If value is not in choices." )
+        __.ddoc.Raises( _ConstraintViolation, "If value is not in choices." )
     ]:
         ''' Validates value is in allowed choices. '''
         if value not in self.choices:
-            raise ConstraintViolation( self.message )
+            raise _ConstraintViolation( self.message )
         return value
